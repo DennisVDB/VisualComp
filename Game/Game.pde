@@ -1,5 +1,9 @@
 float depth = 500;
 
+float boxWidth;
+float boxDepth;
+float boxThickness;
+
 float angleX = 0;
 float angleY = 0;
 float angleZ = 0;
@@ -12,7 +16,11 @@ void setup() {
   size(displayWidth, displayHeight, P3D); 
   noStroke();
   
-  mover = new Mover();
+  boxWidth = width / 3.5;
+  boxDepth = width / 3.5;
+  boxThickness = 10;
+  
+  mover = new Mover(boxWidth, boxDepth, boxThickness, 10);
 }
 
 void draw() {  
@@ -22,7 +30,7 @@ void draw() {
   ambientLight(102, 102, 102);
 
   background(MAX_INT); // white
-  
+    
   translate(width/2, height/2, 0);
         
   /* Negative angle for a more natural movement. */
@@ -30,10 +38,10 @@ void draw() {
   rotateZ(-angleZ);
 
   rotateY(angleY);
-    
-  box(width / 3.5, 10, width / 3.5);
+   
+  box(boxWidth, boxThickness, boxDepth);
   
-  mover.update();
+  mover.update(angleX, angleZ);
   mover.checkEdges();
   mover.display();
 }
