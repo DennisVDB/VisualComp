@@ -19,9 +19,12 @@ class Mover {
     this.radius = radius;
   }
 
-  void update(float angleX, float angleZ) {  
-    velocity = accountForGravity(velocity, angleX, angleZ);
-    velocity = accountForFriction(velocity);
+  void update(float angleX, float angleZ) {
+    PVector deltaGravity = accountForGravity(velocity, angleX, angleZ);
+    PVector deltaFriction = accountForFriction(velocity);
+    
+    velocity.x += deltaGravity.x + deltaFriction.x;
+    velocity.z += deltaGravity.z + deltaFriction.z;
 
     location.add(velocity);
   }
@@ -53,13 +56,15 @@ class Mover {
     }
   }
 
-  PVector accountForGravity(PVector velocity, float angleX, float angleZ) {    
-    return (new PVector(velocity.x - .5 * sin(angleZ), 0, velocity.z + .5 * sin(angleX)));
+  PVector accountForGravity(PVector velocity, float angleX, float angleZ) { 
+   float gravity = 3;
+    
+    return (new PVector(gravity * sin(angleZ), 0, gravity * sin(angleX)));
   }
 
   PVector accountForFriction(PVector velocity) {    
     float normalForce = 1;
-    float mu = 0.01;
+    float mu = .5;
     float frictionMagnitude = normalForce * mu; 
     
     PVector friction = velocity.get(); 
@@ -67,7 +72,7 @@ class Mover {
     friction.normalize(); 
     friction.mult(frictionMagnitude);
     
-    return (new PVector(velocity.x + friction.x, 0, velocity.z + friction.z));
+    return (new PVector(friction.x, 0, friction.z));
   }
 }
 

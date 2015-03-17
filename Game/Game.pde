@@ -1,4 +1,4 @@
-float depth = 500;
+float depth = 1000;
 
 float boxWidth;
 float boxDepth;
@@ -16,11 +16,11 @@ void setup() {
   size(displayWidth, displayHeight, P3D); 
   noStroke();
   
-  boxWidth = width / 3.5;
-  boxDepth = width / 3.5;
+  boxWidth = width / 2;
+  boxDepth = width / 2;
   boxThickness = 10;
   
-  mover = new Mover(boxWidth, boxDepth, boxThickness, 10);
+  mover = new Mover(boxWidth, boxDepth, boxThickness, 20);
 }
 
 void draw() {  
@@ -35,9 +35,9 @@ void draw() {
         
   /* Negative angle for a more natural movement. */
   rotateX(-angleX);
-  rotateZ(-angleZ);
+  rotateZ(angleZ);
 
-  rotateY(angleY);
+//  rotateY(angleY);
    
   box(boxWidth, boxThickness, boxDepth);
   
@@ -46,15 +46,15 @@ void draw() {
   mover.display();
 }
 
-void keyPressed() { 
-  if (key == CODED) {
-    if (keyCode == LEFT) { 
-      angleY += PI / 180.0;
-    } else if (keyCode == RIGHT) {
-      angleY -= PI / 180.0;
-    }
-  }
-}
+//void keyPressed() { 
+//  if (key == CODED) {
+//    if (keyCode == LEFT) { 
+//      angleY += PI / 180.0;
+//    } else if (keyCode == RIGHT) {
+//      angleY -= PI / 180.0;
+//    }
+//  }
+//}
 
 void mouseDragged() {
   angleX += map(mouseY - pmouseY, -height, height, -speed / 100, speed / 100);
