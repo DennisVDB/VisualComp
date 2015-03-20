@@ -16,7 +16,7 @@ ArrayList<Cylinder> obstacles = new ArrayList<Cylinder>();
 boolean editMode = false;
 
 void setup() { 
-  size(displayHeight, displayHeight, P3D); 
+  size(displayWidth, displayHeight, P3D); 
   noStroke();
 
   boxWidth = width / 2;

@@ -1,11 +1,11 @@
 class Cylinder {
-  float cylinderBaseSize = 50; 
-  float cylinderHeight = 50;
-  int cylinderResolution = 40;
+  private float cylinderBaseSize = 50; 
+  private float cylinderHeight = 50;
+  private int cylinderResolution = 40;
 
-  PVector position;
+  private PVector position;
 
-  PShape cylinder = new PShape();
+  private PShape cylinder = new PShape();
 
   public Cylinder(PVector position) {
     this.position = position;

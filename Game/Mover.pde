@@ -1,13 +1,13 @@
 class Mover { 
-  PVector location;
-  PVector velocity;
+ private  PVector location;
+  private PVector velocity;
 
-  float boarderX;
-  float boarderZ;
+  private float boarderX;
+  private float boarderZ;
 
-  float radius;
+  private float radius;
 
-  Mover(float boxWidth, float boxDepth, float boxThickness, float radius) {  
+  public Mover(float boxWidth, float boxDepth, float boxThickness, float radius) {  
     float offset = -(radius + boxThickness / 2);
     this.location = new PVector(0, offset, 0); 
     
@@ -19,7 +19,7 @@ class Mover {
     this.radius = radius;
   }
 
-  void update(float angleX, float angleZ) {
+  public void update(float angleX, float angleZ) {
     PVector deltaGravity = accountForGravity(velocity, angleX, angleZ);
     PVector deltaFriction = accountForFriction(velocity);
     
@@ -29,7 +29,7 @@ class Mover {
     location.add(velocity);
   }
 
-  void display() {
+  public void display() {
     fill(255);
     stroke(0);
     
@@ -42,7 +42,7 @@ class Mover {
     popMatrix();
   }
 
-  void checkEdges() {
+  public void checkEdges() {
     if (location.x <  -boarderX) {
       location.x = -boarderX;
       velocity.x = -velocity.x;
@@ -60,13 +60,13 @@ class Mover {
     }
   }
 
-  PVector accountForGravity(PVector velocity, float angleX, float angleZ) { 
+  private PVector accountForGravity(PVector velocity, float angleX, float angleZ) { 
    float gravity = 3;
     
     return (new PVector(gravity * sin(angleZ), 0, gravity * sin(angleX)));
   }
 
-  PVector accountForFriction(PVector velocity) {    
+  private PVector accountForFriction(PVector velocity) {    
     float normalForce = 1;
     float mu = .5;
     float frictionMagnitude = normalForce * mu; 
