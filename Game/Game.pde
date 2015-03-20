@@ -1,4 +1,5 @@
 float depth = 1000;
+float elevation = 800;
 
 float boxWidth;
 float boxDepth;
@@ -27,8 +28,13 @@ void setup() {
 }
 
 void draw() {  
+  /* 
+   * The elevation of the camera creates projection problems when
+   * getting coordinates from the mouse. Therefore we remove this 
+   * elevation while in "edit" mode.
+   */
   if (!editMode) {
-    camera(width / 2, height / 2 - 500, depth, width / 2, height / 2, 0, 0, 1, 0);
+    camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
   } else {
     camera(width / 2, height / 2, depth, width / 2, height / 2, 0, 0, 1, 0);
   }
@@ -38,10 +44,11 @@ void draw() {
 
   background(MAX_INT); // white
 
+  /* Center of the screen. */
   translate(width/2, height/2, 0);
 
   if (!editMode) {    
-    /* Negative angle for a more natural movement. */
+    /* Angle of the board. */
     rotateX(-angleX);
     rotateZ(angleZ);
 
@@ -49,6 +56,11 @@ void draw() {
 
     mover.update(angleX, angleZ);
 
+    /* 
+     * Display the cylinders and handle 
+     * the collisions between the ball and
+     * the cylinders.
+     */
     for (Cylinder c : obstacles) {
       c.display();
       mover.handleCylinderCollision(c);
@@ -58,12 +70,16 @@ void draw() {
 
     mover.display();
   } else {    
-    /* Rotate to face the camera. */
+    /*
+     * Rotate in order for the
+     * plate to face the camera.
+     */
     rotateX(-PI/2);
 
     box(boxWidth, boxThickness, boxDepth);
+    
     mover.display();
-
+  
     for (Cylinder c : obstacles) {                
       c.display();
     }
@@ -87,6 +103,14 @@ void keyReleased() {
 }
 
 void mouseDragged() {
+  /* 
+   * The delta of the angle is determined
+   * from the difference between the current
+   * mouse position and the previous. It is then 
+   * mapped on a interval whose size is determined 
+   * by the speed. This allows us to have faster 
+   * movements as the speed increases.
+   */
   angleX += map(mouseY - pmouseY, -height, height, -speed / 100, speed / 100);
   angleZ += map(mouseX - pmouseX, -width, width, -speed / 100, speed / 100);  
 
@@ -100,6 +124,10 @@ void mouseClicked() {
 
     Cylinder cylinder = new Cylinder(position);
 
+    /* 
+     * Check if the cylinder is not in the way the ball
+     * and is on the board.
+     */
     if (!mover.checkCylinderCollision(cylinder) &&
       position.x >= -boxWidth/2 && position.x <= boxWidth/2 &&
       position.z >= -boxDepth/2 && position.z <= boxDepth/2) {

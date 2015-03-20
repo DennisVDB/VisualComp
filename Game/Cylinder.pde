@@ -20,7 +20,7 @@ class Cylinder {
       x[i] = sin(angle) * cylinderBaseSize; 
       y[i] = cos(angle) * cylinderBaseSize;
     }
-
+  
     cylinder = createShape(GROUP);
 
     /* Cylinder body */
@@ -34,7 +34,6 @@ class Cylinder {
     }
 
     cylinderBody.endShape();   
-    /* --- */
 
     /* Cylinder top */
     PShape cylinderTop = createShape();
@@ -48,7 +47,6 @@ class Cylinder {
     }
 
     cylinderTop.endShape(); 
-    /* --- */
 
     /* Cylinder bottom */
     PShape cylinderBottom = createShape();
@@ -62,8 +60,8 @@ class Cylinder {
     }
 
     cylinderBottom.endShape(); 
-    /* --- */
 
+    /* Assemble the parts. */
     cylinder.addChild(cylinderBody);
     cylinder.addChild(cylinderTop);
     cylinder.addChild(cylinderBottom);
@@ -73,6 +71,8 @@ class Cylinder {
     pushMatrix();
         
     translate(position.x, 0, position.z);
+    
+    /* Rotate in order to be in the right position. */
     rotateX(PI/2);
     
     shape(cylinder);
@@ -81,7 +81,7 @@ class Cylinder {
   }
   
   public PVector getPosition() {
-    return position;
+    return new PVector(position.x, position.y, position.z);
   }
     
   public float getRadius() {

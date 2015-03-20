@@ -8,6 +8,8 @@ class Mover {
   private float radius;
 
   private float offset;
+ 
+  private float DELTA = 0.01; 
 
   public Mover(float boxWidth, float boxDepth, float boxThickness, float radius) {  
     offset = -(radius + boxThickness / 2);
@@ -45,17 +47,24 @@ class Mover {
     popMatrix();
   }
 
+  /**
+   * Check if the ball is colliding with 
+   * the boarders and manage the collision.
+   * The ball is also moved to the boarder in
+   * order to avoid that it goes to far between
+   * two displays.
+   */
   public void checkEdges() {
     if (position.x <  -boarderX) {
-      position.x = -boarderX;
+      position.x = -boarderX; 
       velocity.x = -velocity.x;
     } else if  (position.x > boarderX) {
-      position.x = boarderX;
+      position.x = boarderX; 
       velocity.x = -velocity.x;
     } 
 
     if (position.z < -boarderZ) {
-      position.z = -boarderZ;
+      position.z = -boarderZ; 
       velocity.z = -velocity.z;
     } else if (position.z > boarderZ) { 
       position.z = boarderZ;
@@ -90,13 +99,21 @@ class Mover {
     return distance <= 0;
   }
 
+  /**
+   * Handles the collision with a cylinder.
+   * When a collision occurs the ball is moved
+   * to the limit in order to avoid that the ball is 
+   * drawn inside the cylinder.
+  */ 
   public void handleCylinderCollision(Cylinder cylinder) {
     if (checkCylinderCollision(cylinder)) {
       PVector normal = new PVector(position.x, position.y, position.z);
       normal.sub(cylinder.getPosition());
 
       PVector newPosition = new PVector(normal.x, normal.y, normal.z);
-      newPosition.setMag(radius + cylinder.getRadius());
+    
+      /* Add delta to avoid the ball to get stuck. */
+      newPosition.setMag(radius + cylinder.getRadius() + DELTA); 
       newPosition.add(cylinder.getPosition());
       position = newPosition;
 
