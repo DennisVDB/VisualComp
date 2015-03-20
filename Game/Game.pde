@@ -27,7 +27,11 @@ void setup() {
 }
 
 void draw() {  
-  camera(width / 2, height / 2, depth, width / 2, height / 2, 0, 0, 1, 0); 
+  if (!editMode) {
+    camera(width / 2, height / 2 - 500, depth, width / 2, height / 2, 0, 0, 1, 0);
+  } else {
+    camera(width / 2, height / 2, depth, width / 2, height / 2, 0, 0, 1, 0);
+  }
 
   directionalLight(50, 100, 125, 0, -1, 0); 
   ambientLight(102, 102, 102);
@@ -36,22 +40,22 @@ void draw() {
 
   translate(width/2, height/2, 0);
 
-  if (!editMode) {
+  if (!editMode) {    
     /* Negative angle for a more natural movement. */
     rotateX(-angleX);
     rotateZ(angleZ);
 
     box(boxWidth, boxThickness, boxDepth);
-    
+
     mover.update(angleX, angleZ);
-    
+
     for (Cylinder c : obstacles) {
       c.display();
       mover.handleCylinderCollision(c);
     }
 
     mover.checkEdges();
-        
+
     mover.display();
   } else {    
     /* Rotate to face the camera. */
@@ -61,7 +65,7 @@ void draw() {
     mover.display();
 
     for (Cylinder c : obstacles) {                
-        c.display();
+      c.display();
     }
   }
 }
@@ -92,15 +96,15 @@ void mouseDragged() {
 
 void mouseClicked() {
   if (editMode) {
-      PVector position = new PVector(mouseX - width/2, 0, mouseY - height/2);
-      
-      Cylinder cylinder = new Cylinder(position);
-      
-      if (!mover.checkCylinderCollision(cylinder) &&
-          position.x >= -boxWidth/2 && position.x <= boxWidth/2 &&
-          position.z >= -boxDepth/2 && position.z <= boxDepth/2) {
-        obstacles.add(cylinder);
-      }
+    PVector position = new PVector(mouseX - width/2, 0, mouseY - height/2);
+
+    Cylinder cylinder = new Cylinder(position);
+
+    if (!mover.checkCylinderCollision(cylinder) &&
+      position.x >= -boxWidth/2 && position.x <= boxWidth/2 &&
+      position.z >= -boxDepth/2 && position.z <= boxDepth/2) {
+      obstacles.add(cylinder);
+    }
   }
 }
 
