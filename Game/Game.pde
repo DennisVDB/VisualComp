@@ -47,7 +47,7 @@ void draw() {
     
     for (Cylinder c : obstacles) {
       c.display();
-      mover.checkCylinderCollision(c);
+      mover.handleCylinderCollision(c);
     }
 
     mover.checkEdges();
@@ -93,7 +93,14 @@ void mouseDragged() {
 void mouseClicked() {
   if (editMode) {
       PVector position = new PVector(mouseX - width/2, 0, mouseY - height/2);
-      obstacles.add(new Cylinder(position));
+      
+      Cylinder cylinder = new Cylinder(position);
+      
+      if (!mover.checkCylinderCollision(cylinder) &&
+          position.x >= -boxWidth/2 && position.x <= boxWidth/2 &&
+          position.z >= -boxDepth/2 && position.z <= boxDepth/2) {
+        obstacles.add(cylinder);
+      }
   }
 }
 
