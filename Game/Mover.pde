@@ -1,15 +1,18 @@
 class Mover { 
- private  PVector location;
+ private  PVector position;
   private PVector velocity;
 
   private float boarderX;
   private float boarderZ;
 
   private float radius;
+  
+  private float offset;
 
   public Mover(float boxWidth, float boxDepth, float boxThickness, float radius) {  
-    float offset = -(radius + boxThickness / 2);
-    this.location = new PVector(0, offset, 0); 
+    offset = -(radius + boxThickness / 2);
+    
+    this.position = new PVector(0, 0, 0); 
     
     this.velocity = new PVector(0, 0, 0);
 
@@ -26,7 +29,7 @@ class Mover {
     velocity.x += deltaGravity.x + deltaFriction.x;
     velocity.z += deltaGravity.z + deltaFriction.z;
 
-    location.add(velocity);
+    position.add(velocity);
   }
 
   public void display() {
@@ -35,7 +38,7 @@ class Mover {
     
     pushMatrix();
 
-    translate(location.x, location.y, location.z);
+    translate(position.x, offset, position.z);
 
     sphere(radius);
     
@@ -43,23 +46,23 @@ class Mover {
   }
 
   public void checkEdges() {
-    if (location.x <  -boarderX) {
-      location.x = -boarderX;
+    if (position.x <  -boarderX) {
+      position.x = -boarderX;
       velocity.x = -velocity.x;
-    } else if  (location.x > boarderX) {
-      location.x = boarderX;
+    } else if  (position.x > boarderX) {
+      position.x = boarderX;
       velocity.x = -velocity.x;
     } 
 
-    if (location.z < -boarderZ) {
-      location.z = -boarderZ;
+    if (position.z < -boarderZ) {
+      position.z = -boarderZ;
       velocity.z = -velocity.z;
-    } else if (location.z > boarderZ) { 
-      location.z = boarderZ;
+    } else if (position.z > boarderZ) { 
+      position.z = boarderZ;
       velocity.z = -velocity.z;
     }
   }
-
+  
   private PVector accountForGravity(PVector velocity, float angleX, float angleZ) { 
    float gravity = 3;
     
@@ -77,6 +80,30 @@ class Mover {
     friction.mult(frictionMagnitude);
     
     return (new PVector(friction.x, 0, friction.z));
+  }
+  
+  public void checkCylinderCollision(Cylinder cylinder) {
+    double centerDistance = position.dist(cylinder.getPosition());
+    
+    double distance = centerDistance - (radius + cylinder.getRadius());
+        
+    if (distance <= 0) {
+          PVector normal = new PVector(position.x, position.y, position.z);
+          normal.sub(cylinder.getPosition());
+          
+          PVector newPosition = new PVector(normal.x, normal.y, normal.z);
+          newPosition.setMag(radius + cylinder.getRadius());
+          newPosition.add(cylinder.getPosition());
+          position = newPosition;
+          
+          normal.normalize();
+          
+          PVector currentVelocity = new PVector(velocity.x, velocity.y, velocity.z);
+          PVector velocityDelta = new PVector(normal.x, normal.y, normal.z);
+          velocityDelta.mult(2 * (velocity.dot(normal)));
+          
+          velocity.sub(velocityDelta);
+    }
   }
 }
 

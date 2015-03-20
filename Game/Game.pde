@@ -43,12 +43,15 @@ void draw() {
 
     box(boxWidth, boxThickness, boxDepth);
     
+    mover.update(angleX, angleZ);
+    
     for (Cylinder c : obstacles) {
       c.display();
+      mover.checkCylinderCollision(c);
     }
 
-    mover.update(angleX, angleZ);
     mover.checkEdges();
+        
     mover.display();
   } else {    
     /* Rotate to face the camera. */

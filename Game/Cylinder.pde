@@ -79,5 +79,13 @@ class Cylinder {
     
     popMatrix();
   }
+  
+  public PVector getPosition() {
+    return position;
+  }
+    
+  public float getRadius() {
+    return cylinderBaseSize;
+  }
 }
 
