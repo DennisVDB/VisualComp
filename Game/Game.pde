@@ -16,7 +16,7 @@ ArrayList<Cylinder> obstacles = new ArrayList<Cylinder>();
 boolean editMode = false;
 
 void setup() { 
-  size(displayWidth, displayHeight, P3D); 
+  size(displayHeight, displayHeight, P3D); 
   noStroke();
 
   boxWidth = width / 2;
@@ -44,30 +44,21 @@ void draw() {
     box(boxWidth, boxThickness, boxDepth);
     
     for (Cylinder c : obstacles) {
-        PVector position = c.getPosition();
-        
-        pushMatrix();
-        translate(position.x, 0, position.z);
-        shape(c.getShape());
-        popMatrix();
+      c.display();
     }
 
     mover.update(angleX, angleZ);
     mover.checkEdges();
     mover.display();
-  } else {
+  } else {    
+    /* Rotate to face the camera. */
     rotateX(-PI/2);
 
     box(boxWidth, boxThickness, boxDepth);
     mover.display();
 
-    for (Cylinder c : obstacles) {
-        PVector position = c.getPosition();
-        
-        pushMatrix();
-        translate(position.x, 0, position.z);
-        shape(c.getShape());
-        popMatrix();
+    for (Cylinder c : obstacles) {                
+        c.display();
     }
   }
 }

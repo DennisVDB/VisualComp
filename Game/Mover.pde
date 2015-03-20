@@ -32,10 +32,14 @@ class Mover {
   void display() {
     fill(255);
     stroke(0);
+    
+    pushMatrix();
 
     translate(location.x, location.y, location.z);
 
     sphere(radius);
+    
+    popMatrix();
   }
 
   void checkEdges() {

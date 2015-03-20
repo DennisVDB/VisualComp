@@ -2,14 +2,14 @@ class Cylinder {
   float cylinderBaseSize = 50; 
   float cylinderHeight = 50;
   int cylinderResolution = 40;
-  
+
   PVector position;
-  
+
   PShape cylinder = new PShape();
 
   public Cylinder(PVector position) {
     this.position = position;
-    
+
     float angle;
     float[] x = new float[cylinderResolution + 1]; 
     float[] y = new float[cylinderResolution + 1];
@@ -33,48 +33,51 @@ class Cylinder {
       cylinderBody.vertex(x[i], y[i], cylinderHeight);
     }
 
-    cylinder.endShape();   
+    cylinderBody.endShape();   
     /* --- */
-    
+
     /* Cylinder top */
     PShape cylinderTop = createShape();
     cylinderTop.beginShape(TRIANGLE_FAN);
-    
+
     cylinderTop.vertex(0, 0, 0);
-    
-     for (int i = 0; i < x.length; i++) { 
+
+    for (int i = 0; i < x.length; i++) { 
       cylinderTop.vertex(x[i], y[i], 0);
       cylinderTop.vertex(x[i], y[i], 0);
     }
-    
+
     cylinderTop.endShape(); 
     /* --- */
-    
+
     /* Cylinder bottom */
     PShape cylinderBottom = createShape();
     cylinderBottom.beginShape(TRIANGLE_FAN);
-    
+
     cylinderBottom.vertex(0, 0, cylinderHeight);
-    
-     for (int i = 0; i < x.length; i++) { 
+
+    for (int i = 0; i < x.length; i++) { 
       cylinderBottom.vertex(x[i], y[i], cylinderHeight);
       cylinderBottom.vertex(x[i], y[i], cylinderHeight);
     }
-    
+
     cylinderBottom.endShape(); 
     /* --- */
-    
+
     cylinder.addChild(cylinderBody);
     cylinder.addChild(cylinderTop);
     cylinder.addChild(cylinderBottom);
   }
   
-  public PShape getShape() {
-    return cylinder;
-  }
-  
-  public PVector getPosition() {
-    return position;
+  public void display() {
+    pushMatrix();
+        
+    translate(position.x, 0, position.z);
+    rotateX(PI/2);
+    
+    shape(cylinder);
+    
+    popMatrix();
   }
 }
 
