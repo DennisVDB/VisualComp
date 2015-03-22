@@ -43,7 +43,6 @@ class Cylinder {
 
     for (int i = 0; i < x.length; i++) { 
       cylinderTop.vertex(x[i], y[i], 0);
-      cylinderTop.vertex(x[i], y[i], 0);
     }
 
     cylinderTop.endShape(); 
@@ -56,7 +55,6 @@ class Cylinder {
 
     for (int i = 0; i < x.length; i++) { 
       cylinderBottom.vertex(x[i], y[i], cylinderHeight);
-      cylinderBottom.vertex(x[i], y[i], cylinderHeight);
     }
 
     cylinderBottom.endShape(); 
@@ -65,9 +63,11 @@ class Cylinder {
     cylinder.addChild(cylinderBody);
     cylinder.addChild(cylinderTop);
     cylinder.addChild(cylinderBottom);
+    
+    cylinder.setFill(color(0, 127, 0));
   }
   
-  public void display() {
+  public void display() { 
     pushMatrix();
         
     translate(position.x, 0, position.z);

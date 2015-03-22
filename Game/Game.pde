@@ -1,5 +1,4 @@
 float depth = 1000;
-float elevation = 800;
 
 float boxWidth;
 float boxDepth;
@@ -33,13 +32,15 @@ void draw() {
    * getting coordinates from the mouse. Therefore we remove this 
    * elevation while in "edit" mode.
    */
-  if (!editMode) {
-    camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
-  } else {
-    camera(width / 2, height / 2, depth, width / 2, height / 2, 0, 0, 1, 0);
+  float elevation = 800;
+
+  if (editMode) {
+    elevation = 0;
   }
 
-  directionalLight(50, 100, 125, 0, -1, 0); 
+  camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
+
+  directionalLight(51, 102, 126, 0, 1, 1); 
   ambientLight(102, 102, 102);
 
   background(MAX_INT); // white
@@ -52,6 +53,7 @@ void draw() {
     rotateX(-angleX);
     rotateZ(angleZ);
 
+    fill(200, 200, 200);
     box(boxWidth, boxThickness, boxDepth);
 
     mover.update(angleX, angleZ);
@@ -76,10 +78,11 @@ void draw() {
      */
     rotateX(-PI/2);
 
+    fill(200, 200, 200);
     box(boxWidth, boxThickness, boxDepth);
-    
+
     mover.display();
-  
+
     for (Cylinder c : obstacles) {                
       c.display();
     }

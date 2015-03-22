@@ -35,13 +35,11 @@ class Mover {
   }
 
   public void display() {
-    fill(255);
-    stroke(0);
-
     pushMatrix();
 
     translate(position.x, offset, position.z);
-
+  
+    fill(255, 0, 0);
     sphere(radius);
 
     popMatrix();
