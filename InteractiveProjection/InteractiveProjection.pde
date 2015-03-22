@@ -6,19 +6,25 @@ float scale = 1;
 float rX = 0;
 float rY = 0;
 
+float dimX = 100;
+float dimY = 150;
+float dimZ = 300;
+
 void draw() {
   background(255,255,255);
   My3DPoint eye = new My3DPoint(0, 0, -5000);
   My3DPoint origin = new My3DPoint(0, 0, 0);
-  My3DBox input3DBox = new My3DBox(origin, 100, 150, 300);
+  My3DBox input3DBox = new My3DBox(origin, dimX, dimY, dimZ);
   
+  float[][] t= translationMatrix(dimX/(-2),dimY/(-2),dimZ/(-2));
+  input3DBox = transformBox(input3DBox, t);
   float[][] transform1= rotateXMatrix(rX);
   input3DBox = transformBox(input3DBox, transform1);
   float[][] transform2= rotateYMatrix(rY);
   input3DBox = transformBox(input3DBox, transform2);
   float[][] transform3= scaleMatrix(scale,scale,scale);
   input3DBox = transformBox(input3DBox, transform3);
-  float[][] transform4= translationMatrix(width/2 - 50, height/2 - 75, 0);
+  float[][] transform4= translationMatrix(width/2 - dimX/2, height/2 - dimY/2, 0);
   input3DBox = transformBox(input3DBox, transform4);
   
   projectBox(eye, input3DBox).render();
