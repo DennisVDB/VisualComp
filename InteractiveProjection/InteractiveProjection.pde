@@ -16,14 +16,18 @@ void draw() {
   My3DPoint origin = new My3DPoint(0, 0, 0);
   My3DBox input3DBox = new My3DBox(origin, dimX, dimY, dimZ);
   
-  float[][] t= translationMatrix(dimX/(-2),dimY/(-2),dimZ/(-2));
+  float[][] t = translationMatrix(dimX/(-2),dimY/(-2),dimZ/(-2));
   input3DBox = transformBox(input3DBox, t);
-  float[][] transform1= rotateXMatrix(rX);
+  
+  float[][] transform1 = rotateXMatrix(rX);
   input3DBox = transformBox(input3DBox, transform1);
-  float[][] transform2= rotateZMatrix(rY);
+  
+  float[][] transform2 = rotateYMatrix(rY);
   input3DBox = transformBox(input3DBox, transform2);
-  float[][] transform3= scaleMatrix(scale,scale,scale);
+  
+  float[][] transform3 = scaleMatrix(scale, scale, scale);
   input3DBox = transformBox(input3DBox, transform3);
+  
   float[][] transform4= translationMatrix(width/2 - dimX/2, height/2 - dimY/2, 0);
   input3DBox = transformBox(input3DBox, transform4);
   
