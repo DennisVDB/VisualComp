@@ -20,7 +20,7 @@ void draw() {
   input3DBox = transformBox(input3DBox, t);
   float[][] transform1= rotateXMatrix(rX);
   input3DBox = transformBox(input3DBox, transform1);
-  float[][] transform2= rotateYMatrix(rY);
+  float[][] transform2= rotateZMatrix(rY);
   input3DBox = transformBox(input3DBox, transform2);
   float[][] transform3= scaleMatrix(scale,scale,scale);
   input3DBox = transformBox(input3DBox, transform3);
