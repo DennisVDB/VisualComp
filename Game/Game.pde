@@ -21,7 +21,7 @@ ArrayList<Cylinder> obstacles = new ArrayList<Cylinder>();
 boolean editMode = false;
 
 void setup() { 
-  size(800, 800, P3D); 
+  size(displayWidth, displayHeight, P3D); 
   noStroke();
 
   boxWidth = width / 2;
@@ -46,22 +46,23 @@ void draw() {
   if (editMode) {
     elevation = 0;
   }
-  
+
   directionalLight(51, 102, 126, 0, 1, 1); 
   ambientLight(102, 102, 102);
 
   background(MAX_INT); // white
-  
+
   camera();
   drawInfoWindow();
   image(infoWindow, 0, height - infoWindowHeight);
-  
-  camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
 
-  /* Center of the screen. */
-  translate(width/2, height/2, 0);
+  if (!editMode) {  
+    camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
 
-  if (!editMode) {    
+    /* Center of the screen. */
+    translate(width/2, height/2, 0);
+
+
     /* Angle of the board. */
     rotateX(-angleX);
     rotateZ(angleZ);
@@ -84,12 +85,16 @@ void draw() {
     mover.checkEdges();
 
     mover.display();
-  } else {    
+  } else {   
+    camera();
+
+    /* Center of the screen. */
+    translate(width/2, height/2, 0);
+
     /*
      * Rotate in order for the
      * plate to face the camera.
      */
-     camera();
     rotateX(-PI/2);
 
     fill(200, 200, 200);
@@ -107,21 +112,21 @@ void drawInfoWindow() {
   infoWindow.beginDraw();
 
   infoWindow.background(127);
-  
+
   infoWindow.rect(0, 0, infoWindowHeight, infoWindowHeight);
 
   pushMatrix();
-  
+
   translate(infoWindowHeight / 2, infoWindowHeight / 2);
-  
+
   PVector moverPosition = mover.getPosition();
   infoWindow.ellipse(moverPosition.x, moverPosition.z, 5, 5);
-  
+
   for (Cylinder c : obstacles) {
-      PVector cylinderPosition = c.getPosition();
-      infoWindow.ellipse(cylinderPosition.x, cylinderPosition.z, 10, 10);
+    PVector cylinderPosition = c.getPosition();
+    infoWindow.ellipse(cylinderPosition.x, cylinderPosition.z, 10, 10);
   }
-  
+
   popMatrix();
 
   infoWindow.endDraw();
