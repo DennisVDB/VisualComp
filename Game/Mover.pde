@@ -1,5 +1,5 @@
 class Mover { 
-  private  PVector position;
+  private PVector position;
   private PVector velocity;
 
   private float boarderX;
@@ -123,6 +123,10 @@ class Mover {
 
       velocity.sub(velocityDelta);
     }
+  }
+  
+  public PVector getPosition() {
+    return position;
   }
 }
 

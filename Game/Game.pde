@@ -1,8 +1,13 @@
 float depth = 1000;
 
+PGraphics infoWindow;
+
 float boxWidth;
 float boxDepth;
 float boxThickness;
+
+int infoWindowHeight;
+int infoWindowWidth;
 
 float angleX = 0;
 float angleY = 0;
@@ -16,7 +21,7 @@ ArrayList<Cylinder> obstacles = new ArrayList<Cylinder>();
 boolean editMode = false;
 
 void setup() { 
-  size(displayWidth, displayHeight, P3D); 
+  size(800, 800, P3D); 
   noStroke();
 
   boxWidth = width / 2;
@@ -24,6 +29,10 @@ void setup() {
   boxThickness = 10;
 
   mover = new Mover(boxWidth, boxDepth, boxThickness, 20);
+
+  infoWindowHeight = height / 4;
+  infoWindowWidth = width;
+  infoWindow = createGraphics(infoWindowWidth, infoWindowHeight, P2D);
 }
 
 void draw() {  
@@ -37,13 +46,17 @@ void draw() {
   if (editMode) {
     elevation = 0;
   }
-
-  camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
-
+  
   directionalLight(51, 102, 126, 0, 1, 1); 
   ambientLight(102, 102, 102);
 
   background(MAX_INT); // white
+  
+  camera();
+  drawInfoWindow();
+  image(infoWindow, 0, height - infoWindowHeight);
+  
+  camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
 
   /* Center of the screen. */
   translate(width/2, height/2, 0);
@@ -76,6 +89,7 @@ void draw() {
      * Rotate in order for the
      * plate to face the camera.
      */
+     camera();
     rotateX(-PI/2);
 
     fill(200, 200, 200);
@@ -87,6 +101,30 @@ void draw() {
       c.display();
     }
   }
+}
+
+void drawInfoWindow() {
+  infoWindow.beginDraw();
+
+  infoWindow.background(127);
+  
+  infoWindow.rect(0, 0, infoWindowHeight, infoWindowHeight);
+
+  pushMatrix();
+  
+  translate(infoWindowHeight / 2, infoWindowHeight / 2);
+  
+  PVector moverPosition = mover.getPosition();
+  infoWindow.ellipse(moverPosition.x, moverPosition.z, 5, 5);
+  
+  for (Cylinder c : obstacles) {
+      PVector cylinderPosition = c.getPosition();
+      infoWindow.ellipse(cylinderPosition.x, cylinderPosition.z, 10, 10);
+  }
+  
+  popMatrix();
+
+  infoWindow.endDraw();
 }
 
 void keyPressed() { 
