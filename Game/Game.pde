@@ -15,6 +15,9 @@ float angleZ = 0;
 float speed = 800;
 float maxRotation = PI / 3.0;
 
+float previewMoverRadius;
+float previewCylinderRadius;
+
 Mover mover;
 ArrayList<Cylinder> obstacles = new ArrayList<Cylinder>();
 
@@ -29,10 +32,13 @@ void setup() {
   boxThickness = 10;
 
   mover = new Mover(boxWidth, boxDepth, boxThickness, 20);
-
+  
   infoWindowHeight = height / 4;
   infoWindowWidth = width;
   infoWindow = createGraphics(infoWindowWidth, infoWindowHeight, P2D);
+  
+  previewMoverRadius = (20 * infoWindowHeight) / boxWidth;
+  previewCylinderRadius = (100 * infoWindowHeight) / boxWidth;
 }
 
 void draw() {  
@@ -126,7 +132,7 @@ void drawInfoWindow() {
   x = map(moverPosition.x, -boxWidth / 2, boxWidth / 2, 0, infoWindowHeight);
   z = map(moverPosition.z, -boxDepth / 2, boxDepth / 2, 0, infoWindowHeight);
   
-  infoWindow.ellipse(x, z, 50, 50);
+  infoWindow.ellipse(x, z, previewMoverRadius, previewMoverRadius);
 
   for (Cylinder c : obstacles) {
     PVector cylinderPosition = c.getPosition();
@@ -134,7 +140,7 @@ void drawInfoWindow() {
     x = map(cylinderPosition.x, -boxWidth / 2, boxWidth / 2, 0, infoWindowHeight);
     z = map(cylinderPosition.z, -boxDepth / 2, boxDepth / 2, 0, infoWindowHeight);
     
-    infoWindow.ellipse(x, z, 10, 10);
+    infoWindow.ellipse(x, z, previewCylinderRadius, previewCylinderRadius);
   }
 
   popMatrix();
