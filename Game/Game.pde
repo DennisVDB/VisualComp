@@ -54,7 +54,7 @@ void draw() {
 
   camera();
   drawInfoWindow();
-  image(infoWindow, 0, height - infoWindowHeight);
+  image(infoWindow, 0, height - infoWindowHeight - 100);
 
   if (!editMode) {  
     camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
@@ -109,6 +109,8 @@ void draw() {
 }
 
 void drawInfoWindow() {
+  float x, z;
+  
   infoWindow.beginDraw();
 
   infoWindow.background(127);
@@ -120,11 +122,19 @@ void drawInfoWindow() {
   translate(infoWindowHeight / 2, infoWindowHeight / 2);
 
   PVector moverPosition = mover.getPosition();
-  infoWindow.ellipse(moverPosition.x, moverPosition.z, 5, 5);
+  
+  x = map(moverPosition.x, -boxWidth / 2, boxWidth / 2, 0, infoWindowHeight);
+  z = map(moverPosition.z, -boxDepth / 2, boxDepth / 2, 0, infoWindowHeight);
+  
+  infoWindow.ellipse(x, z, 50, 50);
 
   for (Cylinder c : obstacles) {
     PVector cylinderPosition = c.getPosition();
-    infoWindow.ellipse(cylinderPosition.x, cylinderPosition.z, 10, 10);
+    
+    x = map(cylinderPosition.x, -boxWidth / 2, boxWidth / 2, 0, infoWindowHeight);
+    z = map(cylinderPosition.z, -boxDepth / 2, boxDepth / 2, 0, infoWindowHeight);
+    
+    infoWindow.ellipse(x, z, 10, 10);
   }
 
   popMatrix();
