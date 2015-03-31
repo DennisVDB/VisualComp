@@ -19,7 +19,8 @@ float previewMoverRadius;
 float previewCylinderRadius;
 
 Mover mover;
-ArrayList<Cylinder> obstacles = new ArrayList<Cylinder>();
+// ArrayList<Cylinder> obstacles = new ArrayList<Cylinder>();
+ArrayList<Tree> obstacles = new ArrayList<Tree>();
 
 boolean editMode = false;
 
@@ -83,7 +84,7 @@ void draw() {
      * the collisions between the ball and
      * the cylinders.
      */
-    for (Cylinder c : obstacles) {
+    for (Tree c : obstacles) {
       c.display();
       mover.handleCylinderCollision(c);
     }
@@ -108,7 +109,7 @@ void draw() {
 
     mover.display();
 
-    for (Cylinder c : obstacles) {                
+    for (Tree c : obstacles) {                
       c.display();
     }
   }
@@ -134,7 +135,7 @@ void drawInfoWindow() {
   
   infoWindow.ellipse(x, z, previewMoverRadius, previewMoverRadius);
 
-  for (Cylinder c : obstacles) {
+  for (Tree c : obstacles) {
     PVector cylinderPosition = c.getPosition();
     
     x = map(cylinderPosition.x, -boxWidth / 2, boxWidth / 2, 0, infoWindowHeight);
@@ -184,16 +185,16 @@ void mouseClicked() {
   if (editMode) {
     PVector position = new PVector(mouseX - width/2, 0, mouseY - height/2);
 
-    Cylinder cylinder = new Cylinder(position);
+    Tree tree = new Tree(position);
 
     /* 
      * Check if the cylinder is not in the way the ball
      * and is on the board.
      */
-    if (!mover.checkCylinderCollision(cylinder) &&
+    if (!mover.checkCylinderCollision(tree) &&
       position.x >= -boxWidth/2 && position.x <= boxWidth/2 &&
       position.z >= -boxDepth/2 && position.z <= boxDepth/2) {
-      obstacles.add(cylinder);
+      obstacles.add(tree);
     }
   }
 }

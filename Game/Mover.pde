@@ -89,10 +89,10 @@ class Mover {
     return (new PVector(friction.x, 0, friction.z));
   }
 
-  public boolean checkCylinderCollision(Cylinder cylinder) {
-    double centerDistance = position.dist(cylinder.getPosition());
+  public boolean checkCylinderCollision(Tree tree) {
+    double centerDistance = position.dist(tree.getPosition());
 
-    double distance = centerDistance - (radius + cylinder.getRadius());
+    double distance = centerDistance - (radius + tree.getRadius());
 
     return distance <= 0;
   }
@@ -103,16 +103,16 @@ class Mover {
    * to the limit in order to avoid that the ball is 
    * drawn inside the cylinder.
   */ 
-  public void handleCylinderCollision(Cylinder cylinder) {
-    if (checkCylinderCollision(cylinder)) {
+  public void handleCylinderCollision(Tree tree) {
+    if (checkCylinderCollision(tree)) {
       PVector normal = new PVector(position.x, position.y, position.z);
-      normal.sub(cylinder.getPosition());
+      normal.sub(tree.getPosition());
 
       PVector newPosition = new PVector(normal.x, normal.y, normal.z);
     
       /* Add delta to avoid the ball to get stuck. */
-      newPosition.setMag(radius + cylinder.getRadius() + DELTA); 
-      newPosition.add(cylinder.getPosition());
+      newPosition.setMag(radius + tree.getRadius() + DELTA); 
+      newPosition.add(tree.getPosition());
       position = newPosition;
 
       normal.normalize();
