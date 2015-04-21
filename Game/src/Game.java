@@ -1,6 +1,5 @@
 import processing.core.PApplet;
 import processing.core.PGraphics;
-import processing.core.PShape;
 import processing.core.PVector;
 import processing.event.MouseEvent;
 
@@ -20,7 +19,6 @@ public class Game extends PApplet {
     int infoWindowWidth;
 
     float angleX = 0;
-    float angleY = 0;
     float angleZ = 0;
     float speed = 800;
     float maxRotation = PI / 3.0f;
@@ -32,6 +30,15 @@ public class Game extends PApplet {
     ArrayList<Tree> obstacles = new ArrayList<>();
 
     boolean editMode = false;
+
+    static public void main(String[] passedArgs) {
+        String[] appletArgs = new String[]{"Game"};
+        if (passedArgs != null) {
+            PApplet.main(concat(appletArgs, passedArgs));
+        } else {
+            PApplet.main(appletArgs);
+        }
+    }
 
     public void setup() {
         size(displayWidth, displayHeight, P3D);
@@ -76,7 +83,7 @@ public class Game extends PApplet {
             camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
 
     /* Center of the screen. */
-            translate(width/2, height/2, 0);
+            translate(width / 2, height / 2, 0);
 
 
     /* Angle of the board. */
@@ -105,22 +112,20 @@ public class Game extends PApplet {
             camera();
 
     /* Center of the screen. */
-            translate(width/2, height/2, 0);
+            translate(width / 2, height / 2, 0);
 
     /*
      * Rotate in order for the
      * plate to face the camera.
      */
-            rotateX(-PI/2);
+            rotateX(-PI / 2);
 
             fill(200, 200, 200);
             box(boxWidth, boxThickness, boxDepth);
 
             mover.display();
 
-            for (Tree c : obstacles) {
-                c.display();
-            }
+            obstacles.forEach(Tree::display);
         }
     }
 
@@ -192,7 +197,7 @@ public class Game extends PApplet {
 
     public void mouseClicked() {
         if (editMode) {
-            PVector position = new PVector(mouseX - width/2, 0, mouseY - height/2);
+            PVector position = new PVector(mouseX - width / 2, 0, mouseY - height / 2);
 
             Tree tree = new Tree(this, position);
 
@@ -201,8 +206,8 @@ public class Game extends PApplet {
      * and is on the board.
      */
             if (!mover.checkCylinderCollision(tree) &&
-                    position.x >= -boxWidth/2 && position.x <= boxWidth/2 &&
-                    position.z >= -boxDepth/2 && position.z <= boxDepth/2) {
+                    position.x >= -boxWidth / 2 && position.x <= boxWidth / 2 &&
+                    position.z >= -boxDepth / 2 && position.z <= boxDepth / 2) {
                 obstacles.add(tree);
             }
         }
@@ -223,105 +228,5 @@ public class Game extends PApplet {
         angle = angle > maxRotation ? maxRotation : angle;
 
         return angle;
-    }
-
-    class Cylinder {
-        private float cylinderBaseSize = 50;
-        private float cylinderHeight = 50;
-        private int cylinderResolution = 40;
-
-        private PVector position;
-
-        private PShape cylinder = new PShape();
-
-        public Cylinder(PVector position) {
-            this.position = position;
-
-            float angle;
-            float[] x = new float[cylinderResolution + 1];
-            float[] y = new float[cylinderResolution + 1];
-
-            //get the x and y position on a circle for all the sides
-            for (int i = 0; i < x.length; i++) {
-                angle = (TWO_PI / cylinderResolution) * i;
-                x[i] = sin(angle) * cylinderBaseSize;
-                y[i] = cos(angle) * cylinderBaseSize;
-            }
-
-            cylinder = createShape(GROUP);
-
-    /* Cylinder body */
-            PShape cylinderBody = createShape();
-            cylinderBody.beginShape(QUAD_STRIP);
-
-            //draw the border of the cylinder
-            for (int i = 0; i < x.length; i++) {
-                cylinderBody.vertex(x[i], y[i], 0);
-                cylinderBody.vertex(x[i], y[i], cylinderHeight);
-            }
-
-            cylinderBody.endShape();
-
-    /* Cylinder top */
-            PShape cylinderTop = createShape();
-            cylinderTop.beginShape(TRIANGLE_FAN);
-
-            cylinderTop.vertex(0, 0, 0);
-
-            for (int i = 0; i < x.length; i++) {
-                cylinderTop.vertex(x[i], y[i], 0);
-            }
-
-            cylinderTop.endShape();
-
-    /* Cylinder bottom */
-            PShape cylinderBottom = createShape();
-            cylinderBottom.beginShape(TRIANGLE_FAN);
-
-            cylinderBottom.vertex(0, 0, cylinderHeight);
-
-            for (int i = 0; i < x.length; i++) {
-                cylinderBottom.vertex(x[i], y[i], cylinderHeight);
-            }
-
-            cylinderBottom.endShape();
-
-    /* Assemble the parts. */
-            cylinder.addChild(cylinderBody);
-            cylinder.addChild(cylinderTop);
-            cylinder.addChild(cylinderBottom);
-
-            cylinder.setFill(color(0, 127, 0));
-        }
-
-        public void display() {
-            pushMatrix();
-
-            translate(position.x, 0, position.z);
-
-    /* Rotate in order to be in the right position. */
-            rotateX(PI/2);
-
-            shape(cylinder);
-
-            popMatrix();
-        }
-
-        public PVector getPosition() {
-            return new PVector(position.x, position.y, position.z);
-        }
-
-        public float getRadius() {
-            return cylinderBaseSize;
-        }
-    }
-
-    static public void main(String[] passedArgs) {
-        String[] appletArgs = new String[] { "Game" };
-        if (passedArgs != null) {
-            PApplet.main(concat(appletArgs, passedArgs));
-        } else {
-            PApplet.main(appletArgs);
-        }
     }
 }

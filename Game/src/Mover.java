@@ -60,10 +60,10 @@ class Mover extends PApplet {
      * two displays.
      */
     public void checkEdges() {
-        if (position.x <  -boarderX) {
+        if (position.x < -boarderX) {
             position.x = -boarderX;
             velocity.x = -velocity.x;
-        } else if  (position.x > boarderX) {
+        } else if (position.x > boarderX) {
             position.x = boarderX;
             velocity.x = -velocity.x;
         }
