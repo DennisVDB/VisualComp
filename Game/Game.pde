@@ -1,6 +1,10 @@
+import java.text.DecimalFormat;
+
 float depth = 1000;
 
 PGraphics infoWindow;
+PGraphics barWindow;
+PGraphics scoreBoard;
 
 float boxWidth;
 float boxDepth;
@@ -8,6 +12,12 @@ float boxThickness;
 
 int infoWindowHeight;
 int infoWindowWidth;
+int barWindowHeight;
+int barWindowWidth;
+int scoreBoardWidth;
+int scoreBoardHeight;
+
+double [] score;
 
 float angleX = 0;
 float angleY = 0;
@@ -25,8 +35,10 @@ ArrayList<Tree> obstacles = new ArrayList<Tree>();
 boolean editMode = false;
 
 void setup() { 
-  size(displayWidth, displayHeight, P3D); 
+  size(800, 600, P3D); 
   noStroke();
+  
+  score = new double[2];
 
   boxWidth = width / 2;
   boxDepth = width / 2;
@@ -36,10 +48,18 @@ void setup() {
   
   infoWindowHeight = height / 4;
   infoWindowWidth = width;
+  scoreBoardHeight = height / 4;
+  scoreBoardWidth = height / 5;
+  barWindowWidth =infoWindowWidth - (infoWindowHeight+height/5+30);
+  barWindowHeight = infoWindowHeight -50;
+  
   infoWindow = createGraphics(infoWindowWidth, infoWindowHeight, P2D);
+  barWindow = createGraphics(barWindowWidth, barWindowHeight, P2D);
+  scoreBoard = createGraphics(scoreBoardWidth, scoreBoardHeight, P2D);
   
   previewMoverRadius = (20 * infoWindowHeight) / boxWidth;
   previewCylinderRadius = (100 * infoWindowHeight) / boxWidth;
+
 }
 
 void draw() {  
@@ -54,15 +74,18 @@ void draw() {
     elevation = 0;
   }
 
-  directionalLight(51, 102, 126, 0, 1, 1); 
-  ambientLight(102, 102, 102);
 
   background(MAX_INT); // white
 
   camera();
   drawInfoWindow();
-  image(infoWindow, 0, height - infoWindowHeight - 100);
-
+  drawBarWindow();
+  drawScoreBoard();
+image(infoWindow, 0, height - infoWindowHeight );
+image(scoreBoard,infoWindowHeight+20, height-infoWindowHeight);
+image(barWindow,(infoWindowHeight+10+height/5+15),height-infoWindowHeight+10);
+  directionalLight(51, 102, 126, 0, 1, 1); 
+  ambientLight(102, 102, 102);
   if (!editMode) {  
     camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
 
@@ -78,7 +101,9 @@ void draw() {
     box(boxWidth, boxThickness, boxDepth);
 
     mover.update(angleX, angleZ);
-
+   for(int i =0;i<2;i++){
+     score[i]=mover.computeScore(obstacles)[i];
+   }
     /* 
      * Display the cylinders and handle 
      * the collisions between the ball and
@@ -113,17 +138,21 @@ void draw() {
       c.display();
     }
   }
+  
+  //  mover.computeScore(obstacles);
+  
 }
 
 void drawInfoWindow() {
   float x, z;
   
   infoWindow.beginDraw();
+  infoWindow.noStroke();
+  infoWindow.fill(54,100,139);
+  infoWindow.background(255,222,173);
 
-  infoWindow.background(127);
-
-  infoWindow.rect(0, 0, infoWindowHeight, infoWindowHeight);
-
+  infoWindow.rect(0, 0, infoWindowHeight,infoWindowHeight);
+  
   pushMatrix();
 
   translate(infoWindowHeight / 2, infoWindowHeight / 2);
@@ -133,6 +162,8 @@ void drawInfoWindow() {
   x = map(moverPosition.x, -boxWidth / 2, boxWidth / 2, 0, infoWindowHeight);
   z = map(moverPosition.z, -boxDepth / 2, boxDepth / 2, 0, infoWindowHeight);
   
+  infoWindow.noStroke();
+  infoWindow.fill(255,0,0);
   infoWindow.ellipse(x, z, previewMoverRadius, previewMoverRadius);
 
   for (Tree c : obstacles) {
@@ -140,8 +171,9 @@ void drawInfoWindow() {
     
     x = map(cylinderPosition.x, -boxWidth / 2, boxWidth / 2, 0, infoWindowHeight);
     z = map(cylinderPosition.z, -boxDepth / 2, boxDepth / 2, 0, infoWindowHeight);
-    
+    infoWindow.fill(255,222,173);
     infoWindow.ellipse(x, z, previewCylinderRadius, previewCylinderRadius);
+    
   }
 
   popMatrix();
@@ -149,6 +181,44 @@ void drawInfoWindow() {
   infoWindow.endDraw();
 }
 
+void drawBarWindow(){
+barWindow.beginDraw();
+barWindow.background(254,254,226);
+barWindow.fill(54,100,139);
+int i =0;
+while(i<score[1]){
+barWindow.rect(0,barWindowHeight-(5*i/100),10,5);
+i+=100;
+}
+barWindow.endDraw();
+
+}
+
+void drawScoreBoard(){
+scoreBoard.beginDraw();
+scoreBoard.background(255,222,173);
+scoreBoard.noFill();
+  scoreBoard.stroke(255);
+  scoreBoard.strokeWeight(5);
+  scoreBoard.rect(0,5,scoreBoardWidth,scoreBoardHeight-10);
+  scoreBoard.fill(0,0,0);
+  PVector v = mover.getVelocity();
+double velocity = roundDouble(sqrt(v.x*v.x+v.y*v.y));
+String s = "Vitesse :\n"+ velocity;
+scoreBoard.text(s,5,20);
+
+double totalScore = roundDouble(score[1]);
+String s1 = "Total score :\n" + totalScore;
+scoreBoard.text(s1,5,55);
+
+double tempScore = roundDouble(score[0]);
+String s2 = "Last score :\n" +tempScore;
+scoreBoard.text(s2,5,90);
+
+
+scoreBoard.endDraw();
+
+}
 void keyPressed() { 
   if (key == CODED) {
     if (keyCode == SHIFT) { 
@@ -216,3 +286,9 @@ float limitRotation(float angle, float maxRotation) {
   return angle;
 }
 
+private double roundDouble(double value){
+DecimalFormat df = new DecimalFormat("#####.000"); 
+String str = df.format(value);
+return Double.parseDouble(str.replace(',', '.')); 
+
+}

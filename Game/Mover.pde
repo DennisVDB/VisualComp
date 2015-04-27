@@ -8,11 +8,14 @@ class Mover {
   private float radius;
 
   private float offset;
+  private double score;
  
   private float DELTA = 0.01; 
 
   public Mover(float boxWidth, float boxDepth, float boxThickness, float radius) {  
     offset = -(radius + boxThickness / 2);
+    
+    score=0;
 
     this.position = new PVector(0, 0, 0); 
 
@@ -32,6 +35,7 @@ class Mover {
     velocity.z += deltaGravity.z + deltaFriction.z;
 
     position.add(velocity);
+    
   }
 
   public void display() {
@@ -125,8 +129,45 @@ class Mover {
     }
   }
   
+  double[] computeScore(ArrayList<Tree> obstacles){
+  double temp = sqrt(velocity.x*velocity.x +velocity.y*velocity.y);
+  double tab[] = new double[2];
+  tab[0]=0;
+ 
+  for(int i=0;i<obstacles.size();i++){
+    if(mover.checkCylinderCollision(obstacles.get(i))){
+      
+      score+= temp;
+      tab[0]=temp;
+    }
+  }
+  
+  if(position.x<=-boarderX || position.x>=boarderX || position.y<=-boarderZ || position.y>=boarderZ && score>=temp){
+  if(score-temp>=0){
+    score-= temp;
+  }else{
+    score = 0;
+    }
+    tab[0]=-temp;
+  
+
+}
+tab[1]=score;
+return tab;
+}
+  
+  
+  
+  
   public PVector getPosition() {
     return position;
+  }
+  
+  public PVector getVelocity(){
+  return velocity;
+  }
+  public double getScore(){
+    return score;
   }
 }
 
