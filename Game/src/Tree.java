@@ -12,7 +12,7 @@ class Tree extends PApplet {
     public Tree(PApplet parent, PVector position) {
         this.parent = parent;
 
-        this.tree = parent.loadShape("../data/tree.obj");
+        this.tree = parent.loadShape("tree.obj");
         this.tree.scale(10);
 
         this.position = position;
