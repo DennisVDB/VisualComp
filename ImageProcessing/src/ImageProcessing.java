@@ -1,21 +1,41 @@
 import processing.core.PApplet;
 import processing.core.PImage;
+import processing.video.Capture;
 
 public class ImageProcessing extends PApplet {
+    Capture cam;
     private PImage img;
     private HScrollbar brightnessBar;
     private HScrollbar colorBar;
 
     public void setup() {
-        size(800, 600);
-        img = loadImage("board1.jpg");
-//        img = loadImage("chess.jpg");
+        size(640, 480);
+        String[] cameras = Capture.list();
+        if (cameras.length == 0) {
+            println("There are no cameras available for capture.");
+            exit(); } else {
+            println("Available cameras:");
+
+            for (int i = 0; i < cameras.length; i++) {
+                println(cameras[i]);
+            }
+
+            cam = new Capture(this, cameras[0]);
+            cam.start();
+        }
 
         brightnessBar = new HScrollbar(this, 0, 580, 800, 20);
         colorBar = new HScrollbar(this, 0, 560, 800, 20);
     }
 
     public void draw() {
+        if (cam.available() == true) {
+            cam.read();
+        }
+
+        img = cam.get();
+        image(img, 0, 0);
+
         background(color(0, 0, 0));
 
         PImage result = createImage(img.width, img.height, RGB);
@@ -141,15 +161,15 @@ public class ImageProcessing extends PApplet {
 
         plotLines(img, discretizationStepsPhi, discretizationStepsR, rDim, accumulator);
 
-        PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
-        for (int i = 0; i < accumulator.length; i++) {
-            houghImg.pixels[i] = color(min(255, accumulator[i]));
-        }
+//        PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
+//        for (int i = 0; i < accumulator.length; i++) {
+//            houghImg.pixels[i] = color(min(255, accumulator[i]));
+//        }
+//
+//        houghImg.updatePixels();
+//        houghImg.resize(640, 480);
 
-        houghImg.updatePixels();
-        houghImg.resize(img.width, img.height);
-
-        return houghImg;
+        return null;
     }
 
     private void plotLines(PImage img, float discretizationStepsPhi, float discretizationStepsR, float rDim, int[] accumulator) {
