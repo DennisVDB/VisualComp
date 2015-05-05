@@ -125,7 +125,9 @@ public class Game extends PApplet {
 
             mover.display();
 
-            obstacles.forEach(Tree::display);
+            for (Tree t : obstacles) {
+                t.display();
+            }
         }
     }
 
