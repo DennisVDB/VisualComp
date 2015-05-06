@@ -1,11 +1,13 @@
 import processing.core.PApplet;
 import processing.core.PImage;
+import processing.core.PVector;
 import processing.video.Capture;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class ImageProcessing extends PApplet {
+public class HoughTransform extends PApplet {
     Capture cam;
     private PImage img;
     private HScrollbar brightnessBar;
@@ -62,7 +64,10 @@ public class ImageProcessing extends PApplet {
         }
         result = sobel(result);
         image(result, 0, 0);
-        result = hough(result);
+        ArrayList<PVector> lines = hough(result);
+
+        ArrayList<PVector> intersections = getIntersections(lines);
+        plotIntersections(intersections);
 
 //        image(result, 0, 0);
 //        image(img, 0, 0);
@@ -73,6 +78,35 @@ public class ImageProcessing extends PApplet {
 
         colorBar.display();
         colorBar.update();
+    }
+
+    private ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
+        ArrayList<PVector> intersections = new ArrayList<PVector>();
+
+        float x, y, d;
+        PVector line1, line2;
+
+        for (int i = 0; i < lines.size() - 1; i++) {
+            line1 = lines.get(i);
+            for (int j = i + 1; j < lines.size(); j++) {
+                line2 = lines.get(j);
+                d = cos(line2.y) * sin(line1.y) - cos(line1.y) * sin(line2.y);
+                x = (line2.x * sin(line1.y) - line1.x * sin(line2.y)) / d;
+                y = (-line2.x * cos(line1.y) + line1.x * cos(line2.y)) / d;
+
+                intersections.add(new PVector(x, y));
+            }
+        }
+
+        return intersections;
+    }
+
+    private void plotIntersections(ArrayList<PVector> intersections) {
+        fill(255, 128, 0);
+
+        for(PVector intersection : intersections) {
+            ellipse(intersection.x, intersection.y, 10, 10);
+        }
     }
 
     private PImage gaussianBlur(PImage img) {
@@ -109,8 +143,8 @@ public class ImageProcessing extends PApplet {
 
         for (int i = 2; i < img.width - 2; i++) {
             for (int j = 2; j < img.height - 2; j++) {
-                for (int k = -N/2; k <= N/2; k++) {
-                    for (int l = -N/2; l <= N/2; l++) {
+                for (int k = -N / 2; k <= N / 2; k++) {
+                    for (int l = -N / 2; l <= N / 2; l++) {
                         sum_v += brightness(img.pixels[(j + l) * img.width + (i + k)]) * vKernel[k + 1][l + 1];
                         sum_h += brightness(img.pixels[(j + l) * img.width + (i + k)]) * hKernel[k + 1][l + 1];
                     }
@@ -131,7 +165,7 @@ public class ImageProcessing extends PApplet {
 
         for (int i = 2; i < img.width - 2; i++) {
             for (int j = 2; j < img.height - 2; j++) {
-                if (buffer[j * img.width + i] > (int)(max * 0.3f)) {
+                if (buffer[j * img.width + i] > (int) (max * 0.3f)) {
                     result.pixels[j * img.width + i] = color(255);
                 } else {
                     result.pixels[j * img.width + i] = color(0);
@@ -142,7 +176,7 @@ public class ImageProcessing extends PApplet {
         return result;
     }
 
-    private PImage hough(PImage img) {
+    private ArrayList<PVector> hough(PImage img) {
         float discretizationStepsPhi = 0.06f;
         float discretizationStepsR = 2.5f;
 
@@ -177,28 +211,98 @@ public class ImageProcessing extends PApplet {
 
         ArrayList<Integer> bestCandidates = new ArrayList<Integer>();
 
-        for (int i = 0; i < ((phiDim + 2) * (rDim + 2)); i++) {
-            bestCandidates.add(new Integer(i));
-        }
+        optimizeCandidates(accumulator, bestCandidates);
 
         Collections.sort(bestCandidates, new HoughComparator(accumulator));
 
-        plotLines(bestCandidates, img.width);
+        ArrayList<PVector> lines = createLines(bestCandidates);
 
-        return null;
+        plotLines(lines, img.width);
+
+        return lines;
     }
 
-    private void plotLines(ArrayList<Integer> bestCandidates, int width) {
+    private void optimizeCandidates(int[] accumulator, ArrayList<Integer> bestCandidates) {
+        float discretizationStepsPhi = 0.06f;
+        float discretizationStepsR = 2.5f;
+
+        int phiDim = (int) (Math.PI / discretizationStepsPhi);
+        int rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
+
+        // size of the region we search for a local maximum
+        int neighbourhood = 10;
+
+        // only search around lines with more that this amount of votes
+        // (to be adapted to your image)
+        int minVotes = 200;
+        for (int accR = 0; accR < rDim; accR++) {
+            for (int accPhi = 0; accPhi < phiDim; accPhi++) {
+                // compute current index in the accumulator
+                int i = (accPhi + 1) * (rDim + 2) + accR + 1;
+
+                if (accumulator[i] > minVotes) {
+                    boolean bestCandidate = true;
+
+                    // iterate over the neighbourhood
+                    for (int dPhi = -neighbourhood / 2; dPhi < neighbourhood / 2 + 1; dPhi++) {
+                        // check we are not outside the image
+                        if (accPhi + dPhi < 0 || accPhi + dPhi >= phiDim) {
+                            continue;
+                        }
+
+                        for (int dR = -neighbourhood / 2; dR < neighbourhood / 2 + 1; dR++) {
+                            // check we are not outside the image
+                            if (accR + dR < 0 || accR + dR >= rDim) {
+                                continue;
+                            }
+
+                            int neighbourI = (accPhi + dPhi + 1) * (rDim + 2) + accR + dR + 1;
+
+                            if (accumulator[i] < accumulator[neighbourI]) {
+                                // the current idx is not a local maximum!
+                                bestCandidate = false;
+                                break;
+                            }
+
+                        }
+                        if (!bestCandidate) {
+                            break;
+                        }
+
+                    }
+                    if (bestCandidate) {
+                        // the current idx *is* a local maximum
+                        bestCandidates.add(i);
+                    }
+                }
+            }
+        }
+    }
+
+    private ArrayList<PVector> createLines(ArrayList<Integer> bestCandidates) {
         float discretizationStepsPhi = 0.06f;
         float discretizationStepsR = 2.5f;
         int rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
 
-        for (Integer i : bestCandidates.subList(0, 30)) {
+        ArrayList<PVector> lines = new ArrayList<PVector>();
+
+        for(Integer i : bestCandidates) {
             // first, compute back the (r, phi) polar coordinates:
-            int accPhi = (int) (i / (rDim + 2)) - 1;
-            int accR = (int) (i - (accPhi + 1) * (rDim + 2) - 1);
+            int accPhi = i / (rDim + 2) - 1;
+            int accR = i - (accPhi + 1) * (rDim + 2) - 1;
             float r = (accR - (rDim - 1) * 0.5f) * discretizationStepsR;
             float phi = accPhi * discretizationStepsPhi;
+
+            lines.add(new PVector(r, phi));
+        }
+
+        return lines;
+    }
+
+    private void plotLines(ArrayList<PVector> lines, int width) {
+        for (PVector line : lines) {
+            float r = line.x;
+            float phi = line.y;
 
             // Cartesian equation of a line: y = ax + b
             // in polar, y = (-cos(phi)/sin(phi))x + (r/sin(phi))
@@ -214,8 +318,8 @@ public class ImageProcessing extends PApplet {
             int y3 = width;
             int x3 = (int) (-(y3 - r / sin(phi)) * (sin(phi) / cos(phi)));
 
-            // Finally, plot the lines
-            stroke(204,102,0); if (y0 > 0) {
+            stroke(204, 102, 0);
+            if (y0 > 0) {
                 if (x1 > 0) {
                     line(x0, y0, x1, y1);
                 } else if (y2 > 0) {
@@ -252,8 +356,8 @@ public class ImageProcessing extends PApplet {
 
         for (int i = 1; i < img.width - 1; i++) {
             for (int j = 1; j < img.height - 1; j++) {
-                for (int k = -N/2; k < N/2; k++) {
-                    for (int l = -N/2; l < N/2; l++) {
+                for (int k = -N / 2; k < N / 2; k++) {
+                    for (int l = -N / 2; l < N / 2; l++) {
                         intensities += brightness(img.pixels[(j + l) * img.width + (i + k)]) * kernel[k + 1][l + 1];
                     }
                 }
