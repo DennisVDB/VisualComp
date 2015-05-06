@@ -3,7 +3,6 @@ import processing.core.PImage;
 import processing.core.PVector;
 import processing.video.Capture;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -12,6 +11,13 @@ public class HoughTransform extends PApplet {
     private PImage img;
     private HScrollbar brightnessBar;
     private HScrollbar colorBar;
+
+    private float[] tabSin;
+    private float[] tabCos;
+    private final float discretizationStepsPhi = 0.06f;
+    private final float discretizationStepsR = 2.5f;
+    private final int phiDim = (int) (Math.PI / discretizationStepsPhi);
+    private int rDim;
 
     public void setup() {
 //        size(640, 480);
@@ -34,6 +40,9 @@ public class HoughTransform extends PApplet {
 
         brightnessBar = new HScrollbar(this, 0, 580, 800, 20);
         colorBar = new HScrollbar(this, 0, 560, 800, 20);
+
+        rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
+        createTrigoTables();
     }
 
     public void draw() {
@@ -62,8 +71,9 @@ public class HoughTransform extends PApplet {
         for (int i = 0; i < 3; i++) {
             result = gaussianBlur(result);
         }
+
         result = sobel(result);
-        image(result, 0, 0);
+        image(img, 0, 0);
         ArrayList<PVector> lines = hough(result);
 
         ArrayList<PVector> intersections = getIntersections(lines);
@@ -78,6 +88,19 @@ public class HoughTransform extends PApplet {
 
         colorBar.display();
         colorBar.update();
+    }
+
+    private void createTrigoTables() {
+        tabSin = new float[phiDim];
+        tabCos = new float[phiDim];
+
+        float ang = 0;
+        float inverseR = 1.f / discretizationStepsR;
+        for (int accPhi = 0; accPhi < phiDim; ang += discretizationStepsPhi, accPhi++) {
+            // we can also pre-multiply by (1/discretizationStepsR) since we need it in the Hough loop
+            tabSin[accPhi] = (float) (Math.sin(ang) * inverseR);
+            tabCos[accPhi] = (float) (Math.cos(ang) * inverseR);
+        }
     }
 
     private ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
@@ -177,13 +200,7 @@ public class HoughTransform extends PApplet {
     }
 
     private ArrayList<PVector> hough(PImage img) {
-        float discretizationStepsPhi = 0.06f;
-        float discretizationStepsR = 2.5f;
-
         int r;
-
-        int phiDim = (int) (Math.PI / discretizationStepsPhi);
-        int rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
 
         int offset = (rDim - 1) / 2;
 
@@ -193,7 +210,7 @@ public class HoughTransform extends PApplet {
             for (int y = 0; y < img.height; y++) {
                 if (brightness(img.pixels[y * img.width + x]) != 0) {
                     for (int i = 0; i < phiDim; i++) {
-                        r = (int) ((x * cos(i * discretizationStepsPhi) + y * sin(i * discretizationStepsPhi)) / discretizationStepsR);
+                        r = (int) (x * tabCos[i] + y * tabSin[i]);
                         r += offset;
                         accumulator[(i + 1) * (rDim + 2) + (r + 1)] += 1;
                     }
@@ -223,12 +240,6 @@ public class HoughTransform extends PApplet {
     }
 
     private void optimizeCandidates(int[] accumulator, ArrayList<Integer> bestCandidates) {
-        float discretizationStepsPhi = 0.06f;
-        float discretizationStepsR = 2.5f;
-
-        int phiDim = (int) (Math.PI / discretizationStepsPhi);
-        int rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
-
         // size of the region we search for a local maximum
         int neighbourhood = 10;
 
@@ -280,10 +291,6 @@ public class HoughTransform extends PApplet {
     }
 
     private ArrayList<PVector> createLines(ArrayList<Integer> bestCandidates) {
-        float discretizationStepsPhi = 0.06f;
-        float discretizationStepsR = 2.5f;
-        int rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
-
         ArrayList<PVector> lines = new ArrayList<PVector>();
 
         for(Integer i : bestCandidates) {
