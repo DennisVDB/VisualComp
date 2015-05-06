@@ -1,3 +1,4 @@
+import com.sun.tools.internal.ws.wsdl.document.soap.SOAPUse;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.core.PVector;
@@ -6,20 +7,28 @@ import processing.video.Capture;
 import java.util.ArrayList;
 import java.util.Collections;
 
+/**
+ * Computes a Hough transform.
+ */
 public class HoughTransform extends PApplet {
-    Capture cam;
-    private PImage img;
-    private HScrollbar brightnessBar;
-    private HScrollbar colorBar;
-
-    private float[] tabSin;
-    private float[] tabCos;
     private final float discretizationStepsPhi = 0.06f;
     private final float discretizationStepsR = 2.5f;
+
     private final int phiDim = (int) (Math.PI / discretizationStepsPhi);
     private int rDim;
 
-    public void setup() {
+    private float[] tabSin;
+    private float[] tabCos;
+
+    private Capture cam;
+    private PImage img;
+
+    private HScrollbar brightnessBar;
+    private HScrollbar hueBar;
+    private HScrollbar saturationBar;
+    private HScrollbar intensityBar;
+
+    public final void setup() {
 //        size(640, 480);
 //        String[] cameras = Capture.list();
 //        if (cameras.length == 0) {
@@ -35,17 +44,19 @@ public class HoughTransform extends PApplet {
 //            cam.start();
 //        }
 
-        size(800, 600);
+        size(800, 680);
         img = loadImage("board1.jpg");
 
-        brightnessBar = new HScrollbar(this, 0, 580, 800, 20);
-        colorBar = new HScrollbar(this, 0, 560, 800, 20);
+        hueBar = new HScrollbar(this, 0, 600, 800, 20);
+        brightnessBar = new HScrollbar(this, 0, 620, 800, 20);
+        saturationBar = new HScrollbar(this, 0, 640, 800, 20);
+        intensityBar = new HScrollbar(this, 0, 660, 800, 20);
 
         rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
         createTrigoTables();
     }
 
-    public void draw() {
+    public final void draw() {
 //        if (cam.available() == true) {
 //            cam.read();
 //        }
@@ -57,37 +68,82 @@ public class HoughTransform extends PApplet {
 
         PImage result = createImage(img.width, img.height, RGB);
 
-        double brightnessThreshold = brightnessBar.getPos() * 256;
-        double colorThreshold = colorBar.getPos() * 256;
+        double hueThreshold = getThreshold(hueBar);
+        double brightnessThreshold = getThreshold(brightnessBar);
+        double saturationThreshold = getThreshold(saturationBar);
+        double intensityThreshold = getThreshold(intensityBar);
+
 
         //System.out.println(colorThreshold);
 
-        for (int i = 0; i < img.width * img.height; i++) {
-            if (brightness(img.pixels[i]) < brightnessThreshold && hue(img.pixels[i]) < colorThreshold) {
-                result.pixels[i] = img.pixels[i];
-            }
-        }
 
-        for (int i = 0; i < 3; i++) {
-            result = gaussianBlur(result);
-        }
+        result = hueBrightnessSaturationThresholding(img, hueThreshold, brightnessThreshold, saturationThreshold);
+//        result = gaussianBlur(result);
+        result = intensityThresholding(result, intensityThreshold);
 
         result = sobel(result);
-        image(img, 0, 0);
+        image(result, 0, 0);
+
+
         ArrayList<PVector> lines = hough(result);
 
         ArrayList<PVector> intersections = getIntersections(lines);
         plotIntersections(intersections);
 
+//        System.out.println("Hue: " + hueThreshold);
+//        System.out.println("Brightness: " + brightnessThreshold);
+//        System.out.println("Saturation: " + saturationThreshold);
+//        System.out.println("Intensity: " + intensityThreshold);
+
 //        image(result, 0, 0);
 //        image(img, 0, 0);
 
+        hueBar.display();
+        hueBar.update();
 
         brightnessBar.display();
         brightnessBar.update();
 
-        colorBar.display();
-        colorBar.update();
+        saturationBar.display();
+        saturationBar.update();
+
+        intensityBar.display();
+        intensityBar.update();
+    }
+
+    private double getThreshold(HScrollbar bar) {
+        return bar.getPos() * 255;
+    }
+
+    private PImage hueBrightnessSaturationThresholding(PImage img, double hueThreshold, double brightnessThreshold, double saturationThreshold) {
+        PImage result = createImage(img.width, img.height, RGB);
+
+        int pixelRGB;
+
+        for (int i = 0; i < img.width * img.height; i++) {
+            pixelRGB = img.pixels[i];
+            if (hue(pixelRGB) < hueThreshold && brightness(pixelRGB) < brightnessThreshold && saturation(pixelRGB) < saturationThreshold) {
+                result.pixels[i] = img.pixels[i];
+            }
+        }
+
+        return result;
+    }
+
+    private PImage intensityThresholding(PImage img, double threshold) {
+        // Greyscale to get the intensity and not the brightness
+//        PImage greyScaleImg = img;
+//        greyScaleImg.filter(GRAY);
+
+        PImage result = createImage(img.width, img.height, RGB);
+
+        for (int i = 0; i < img.width * img.height; i++) {
+            if (brightness(img.pixels[i]) < threshold) {
+                result.pixels[i] = img.pixels[i];
+            }
+        }
+
+        return result;
     }
 
     private void createTrigoTables() {
@@ -127,27 +183,33 @@ public class HoughTransform extends PApplet {
     private void plotIntersections(ArrayList<PVector> intersections) {
         fill(255, 128, 0);
 
-        for(PVector intersection : intersections) {
+        for (PVector intersection : intersections) {
             ellipse(intersection.x, intersection.y, 10, 10);
         }
     }
 
     private PImage gaussianBlur(PImage img) {
         float[][] kernel = {{9, 12, 9},
-                {12, 15, 12},
-                {9, 12, 9}};
+                            {12, 15, 12},
+                            {9, 12, 9}};
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                kernel[i][j] /= 99.f;
+            }
+        }
 
         return convolute(img, kernel);
     }
 
     private PImage sobel(PImage img) {
         float[][] hKernel = {{0, 1, 0},
-                {0, 0, 0},
-                {0, -1, 0}};
+                            {0, 0, 0},
+                            {0, -1, 0}};
 
         float[][] vKernel = {{0, 0, 0},
-                {1, 0, -1},
-                {0, 0, 0}};
+                            {1, 0, -1},
+                            {0, 0, 0}};
 
         int N = 3;
         float max = 0;
@@ -157,7 +219,7 @@ public class HoughTransform extends PApplet {
         float sum;
         float[] buffer = new float[img.width * img.height];
 
-        PImage result = createImage(img.width, img.height, ALPHA);
+        PImage result = createImage(img.width, img.height, RGB);
 
         // clear the image
         for (int i = 0; i < img.width * img.height; i++) {
@@ -293,7 +355,9 @@ public class HoughTransform extends PApplet {
     private ArrayList<PVector> createLines(ArrayList<Integer> bestCandidates) {
         ArrayList<PVector> lines = new ArrayList<PVector>();
 
-        for(Integer i : bestCandidates) {
+        int max = bestCandidates.size() / 3;
+
+        for (Integer i : bestCandidates.subList(0, max)) {
             // first, compute back the (r, phi) polar coordinates:
             int accPhi = i / (rDim + 2) - 1;
             int accR = i - (accPhi + 1) * (rDim + 2) - 1;
@@ -368,7 +432,7 @@ public class HoughTransform extends PApplet {
                         intensities += brightness(img.pixels[(j + l) * img.width + (i + k)]) * kernel[k + 1][l + 1];
                     }
                 }
-
+//                System.out.println(intensities);
                 result.pixels[j * img.width + i] = color(intensities / weight);
                 intensities = 0;
             }
