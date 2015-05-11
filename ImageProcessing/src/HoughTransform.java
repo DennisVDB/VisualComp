@@ -1,4 +1,3 @@
-import com.sun.tools.internal.ws.wsdl.document.soap.SOAPUse;
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.core.PVector;
@@ -6,6 +5,8 @@ import processing.video.Capture;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Computes a Hough transform.
@@ -28,8 +29,20 @@ public class HoughTransform extends PApplet {
     private HScrollbar saturationBar;
     private HScrollbar intensityBar;
 
+    private double brightnessThreshold;
+    private double hueThreshold;
+    private double saturationThreshold;
+    private double intensityThreshold;
+
+
+    private double oldBrightness;
+    private double oldHue;
+    private double oldSaturation;
+    private double oldIntensity;
+    private QuadGraph quadGraph;
+
     public final void setup() {
-//        size(640, 480);
+//        size(800, 600);
 //        String[] cameras = Capture.list();
 //        if (cameras.length == 0) {
 //            println("There are no cameras available for capture.");
@@ -52,7 +65,7 @@ public class HoughTransform extends PApplet {
         saturationBar = new HScrollbar(this, 0, 640, 800, 20);
         intensityBar = new HScrollbar(this, 0, 660, 800, 20);
 
-        rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
+        rDim = (int) (((800 + 600) * 2 + 1) / discretizationStepsR);
         createTrigoTables();
     }
 
@@ -63,32 +76,25 @@ public class HoughTransform extends PApplet {
 //
 //        img = cam.get();
 //        image(img, 0, 0);
+//
+//        background(color(0, 0, 0));
 
-        background(color(0, 0, 0));
+        oldHue = hueThreshold;
+        oldBrightness = brightnessThreshold;
+        oldSaturation = saturationThreshold;
+        oldIntensity = intensityThreshold;
 
-        PImage result = createImage(img.width, img.height, RGB);
+        hueThreshold = getThreshold(hueBar);
+        brightnessThreshold = getThreshold(brightnessBar);
+        saturationThreshold = getThreshold(saturationBar);
+        intensityThreshold = getThreshold(intensityBar);
 
-        double hueThreshold = getThreshold(hueBar);
-        double brightnessThreshold = getThreshold(brightnessBar);
-        double saturationThreshold = getThreshold(saturationBar);
-        double intensityThreshold = getThreshold(intensityBar);
+        if (hueThreshold != oldHue || brightnessThreshold != brightnessThreshold|| saturationThreshold != oldSaturation || intensityThreshold != oldIntensity) {
+            updateView(hueThreshold, brightnessThreshold, saturationThreshold, intensityThreshold);
+        }
 
-
-        //System.out.println(colorThreshold);
-
-
-        result = hueBrightnessSaturationThresholding(img, hueThreshold, brightnessThreshold, saturationThreshold);
-//        result = gaussianBlur(result);
-        result = intensityThresholding(result, intensityThreshold);
-
-        result = sobel(result);
-        image(result, 0, 0);
-
-
-        ArrayList<PVector> lines = hough(result);
-
-        ArrayList<PVector> intersections = getIntersections(lines);
-        plotIntersections(intersections);
+//        ArrayList<PVector> intersections = getIntersections(lines);
+//        plotIntersections(intersections);
 
 //        System.out.println("Hue: " + hueThreshold);
 //        System.out.println("Brightness: " + brightnessThreshold);
@@ -109,6 +115,25 @@ public class HoughTransform extends PApplet {
 
         intensityBar.display();
         intensityBar.update();
+    }
+
+    private void updateView(double hueThreshold, double brightnessThreshold, double saturationThreshold, double intensityThreshold) {
+        PImage result;
+
+        result = hueBrightnessSaturationThresholding(img, hueThreshold, brightnessThreshold, saturationThreshold);
+        result = gaussianBlur(result);
+        result = intensityThresholding(result, intensityThreshold);
+        result = sobel(result);
+
+        image(result, 0, 0);
+
+        ArrayList<PVector> lines = hough(result);
+
+        quadGraph = new QuadGraph();
+        quadGraph.build(lines, 800, 600);
+
+        List<int[]> quads = quadGraph.findCycles();
+        plotQuads(lines, quads);
     }
 
     private double getThreshold(HScrollbar bar) {
@@ -169,15 +194,19 @@ public class HoughTransform extends PApplet {
             line1 = lines.get(i);
             for (int j = i + 1; j < lines.size(); j++) {
                 line2 = lines.get(j);
-                d = cos(line2.y) * sin(line1.y) - cos(line1.y) * sin(line2.y);
-                x = (line2.x * sin(line1.y) - line1.x * sin(line2.y)) / d;
-                y = (-line2.x * cos(line1.y) + line1.x * cos(line2.y)) / d;
-
-                intersections.add(new PVector(x, y));
+                intersections.add(getIntersection(line1, line2));
             }
         }
 
         return intersections;
+    }
+
+    private PVector getIntersection(PVector line1, PVector line2) {
+        float d = cos(line2.y) * sin(line1.y) - cos(line1.y) * sin(line2.y);
+        float x = (line2.x * sin(line1.y) - line1.x * sin(line2.y)) / d;
+        float y = (-line2.x * cos(line1.y) + line1.x * cos(line2.y)) / d;
+
+        return new PVector(x, y);
     }
 
     private void plotIntersections(ArrayList<PVector> intersections) {
@@ -190,8 +219,8 @@ public class HoughTransform extends PApplet {
 
     private PImage gaussianBlur(PImage img) {
         float[][] kernel = {{9, 12, 9},
-                            {12, 15, 12},
-                            {9, 12, 9}};
+                {12, 15, 12},
+                {9, 12, 9}};
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -204,12 +233,12 @@ public class HoughTransform extends PApplet {
 
     private PImage sobel(PImage img) {
         float[][] hKernel = {{0, 1, 0},
-                            {0, 0, 0},
-                            {0, -1, 0}};
+                {0, 0, 0},
+                {0, -1, 0}};
 
         float[][] vKernel = {{0, 0, 0},
-                            {1, 0, -1},
-                            {0, 0, 0}};
+                {1, 0, -1},
+                {0, 0, 0}};
 
         int N = 3;
         float max = 0;
@@ -280,14 +309,6 @@ public class HoughTransform extends PApplet {
             }
         }
 
-//        PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
-//        for (int i = 0; i < accumulator.length; i++) {
-//            houghImg.pixels[i] = color(min(255, accumulator[i]));
-//        }
-//
-//        houghImg.updatePixels();
-//        houghImg.resize(640, 480);
-
         ArrayList<Integer> bestCandidates = new ArrayList<Integer>();
 
         optimizeCandidates(accumulator, bestCandidates);
@@ -355,7 +376,7 @@ public class HoughTransform extends PApplet {
     private ArrayList<PVector> createLines(ArrayList<Integer> bestCandidates) {
         ArrayList<PVector> lines = new ArrayList<PVector>();
 
-        int max = bestCandidates.size() / 3;
+        int max = bestCandidates.size() >= 6 ? 6 : bestCandidates.size();
 
         for (Integer i : bestCandidates.subList(0, max)) {
             // first, compute back the (r, phi) polar coordinates:
@@ -368,6 +389,30 @@ public class HoughTransform extends PApplet {
         }
 
         return lines;
+    }
+
+    private void plotQuads(ArrayList<PVector> lines, List<int[]> quads) {
+        for (int[] quad : quads) {
+            PVector l1 = lines.get(quad[0]);
+            PVector l2 = lines.get(quad[1]);
+            PVector l3 = lines.get(quad[2]);
+            PVector l4 = lines.get(quad[3]);
+
+            // (intersection() is a simplified version of the
+            // intersections() method you wrote last week, that simply
+            // return the coordinates of the intersection between 2 lines)
+            PVector c12 = getIntersection(l1, l2);
+            PVector c23 = getIntersection(l2, l3);
+            PVector c34 = getIntersection(l3, l4);
+            PVector c41 = getIntersection(l4, l1);
+
+            // Choose a random, semi-transparent colour
+            Random random = new Random();
+            fill(color(min(255, random.nextInt(300)),
+                    min(255, random.nextInt(300)),
+                    min(255, random.nextInt(300)), 50));
+            quad(c12.x, c12.y, c23.x, c23.y, c34.x, c34.y, c41.x, c41.y);
+        }
     }
 
     private void plotLines(ArrayList<PVector> lines, int width) {
