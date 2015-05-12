@@ -67,13 +67,6 @@ public class QuadGraph {
             }
         });
 
-        cycles.removeIf(new Predicate<int[]>() {
-            @Override
-            public boolean test(int[] cy) {
-                return isConvex(cy[0])
-            }
-        });
-
         for (int[] cy : cycles) {
             String s = "" + cy[0];
 
