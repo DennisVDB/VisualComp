@@ -12,34 +12,19 @@ import java.util.Random;
  * Computes a Hough transform.
  */
 public class HoughTransform extends PApplet {
+    public static final double BRIGHTNESS_THRESHOLD_LOW = 20;
+    public static final double BRIGHTNESS_THRESHOLD_HIGH = 230;
+    public static final double HUE_THRESHOLD_LOW = 110;
+    public static final double HUE_THRESHOLD_HIGH = 150;
+    public static final double SATURATION_THRESHOLD = 118;
     private final float discretizationStepsPhi = 0.06f;
     private final float discretizationStepsR = 2.5f;
-
     private final int phiDim = (int) (Math.PI / discretizationStepsPhi);
     private int rDim;
-
     private float[] tabSin;
     private float[] tabCos;
-
     private Capture cam;
     private PImage img;
-
-    private HScrollbar brightnessBar;
-    private HScrollbar hueBar;
-    private HScrollbar saturationBar;
-    private HScrollbar intensityBar;
-
-    private double brightnessThreshold;
-    private double hueThreshold;
-    private double saturationThreshold;
-    private double intensityThreshold;
-
-
-    private double oldBrightness;
-    private double oldHue;
-    private double oldSaturation;
-    private double oldIntensity;
-    private QuadGraph quadGraph;
 
     public final void setup() {
 //        size(800, 600);
@@ -58,12 +43,7 @@ public class HoughTransform extends PApplet {
 //        }
 
         size(800, 680);
-        img = loadImage("board1.jpg");
-
-        hueBar = new HScrollbar(this, 0, 600, 800, 20);
-        brightnessBar = new HScrollbar(this, 0, 620, 800, 20);
-        saturationBar = new HScrollbar(this, 0, 640, 800, 20);
-        intensityBar = new HScrollbar(this, 0, 660, 800, 20);
+        img = loadImage("board4.jpg");
 
         rDim = (int) (((800 + 600) * 2 + 1) / discretizationStepsR);
         createTrigoTables();
@@ -75,79 +55,41 @@ public class HoughTransform extends PApplet {
 //        }
 //
 //        img = cam.get();
-//        image(img, 0, 0);
-//
-//        background(color(0, 0, 0));
+        image(img, 0, 0);
 
-        oldHue = hueThreshold;
-        oldBrightness = brightnessThreshold;
-        oldSaturation = saturationThreshold;
-        oldIntensity = intensityThreshold;
-
-        hueThreshold = getThreshold(hueBar);
-        brightnessThreshold = getThreshold(brightnessBar);
-        saturationThreshold = getThreshold(saturationBar);
-        intensityThreshold = getThreshold(intensityBar);
-
-        if (hueThreshold != oldHue || brightnessThreshold != brightnessThreshold|| saturationThreshold != oldSaturation || intensityThreshold != oldIntensity) {
-            updateView(hueThreshold, brightnessThreshold, saturationThreshold, intensityThreshold);
-        }
-
-//        ArrayList<PVector> intersections = getIntersections(lines);
-//        plotIntersections(intersections);
-
-//        System.out.println("Hue: " + hueThreshold);
-//        System.out.println("Brightness: " + brightnessThreshold);
-//        System.out.println("Saturation: " + saturationThreshold);
-//        System.out.println("Intensity: " + intensityThreshold);
-
-//        image(result, 0, 0);
-//        image(img, 0, 0);
-
-        hueBar.display();
-        hueBar.update();
-
-        brightnessBar.display();
-        brightnessBar.update();
-
-        saturationBar.display();
-        saturationBar.update();
-
-        intensityBar.display();
-        intensityBar.update();
+        background(color(0, 0, 0));
+        updateView();
     }
 
-    private void updateView(double hueThreshold, double brightnessThreshold, double saturationThreshold, double intensityThreshold) {
+    private void updateView() {
         PImage result;
 
-        result = hueBrightnessSaturationThresholding(img, hueThreshold, brightnessThreshold, saturationThreshold);
+        result = hueBrightnessSaturationThresholding(img);
         result = gaussianBlur(result);
-        result = intensityThresholding(result, intensityThreshold);
+        result = intensityThresholding(result);
         result = sobel(result);
-
         image(result, 0, 0);
+
 
         ArrayList<PVector> lines = hough(result);
 
-        quadGraph = new QuadGraph();
+        QuadGraph quadGraph = new QuadGraph();
         quadGraph.build(lines, 800, 600);
 
         List<int[]> quads = quadGraph.findCycles();
         plotQuads(lines, quads);
     }
 
-    private double getThreshold(HScrollbar bar) {
-        return bar.getPos() * 255;
-    }
-
-    private PImage hueBrightnessSaturationThresholding(PImage img, double hueThreshold, double brightnessThreshold, double saturationThreshold) {
+    private PImage hueBrightnessSaturationThresholding(PImage img) {
         PImage result = createImage(img.width, img.height, RGB);
 
         int pixelRGB;
 
         for (int i = 0; i < img.width * img.height; i++) {
             pixelRGB = img.pixels[i];
-            if (hue(pixelRGB) < hueThreshold && brightness(pixelRGB) < brightnessThreshold && saturation(pixelRGB) < saturationThreshold) {
+            if ((hue(pixelRGB) >= HUE_THRESHOLD_LOW && hue(pixelRGB) < HUE_THRESHOLD_HIGH) &&
+                    (brightness(pixelRGB) >= BRIGHTNESS_THRESHOLD_LOW && brightness(pixelRGB) < BRIGHTNESS_THRESHOLD_HIGH) &&
+                    saturation(pixelRGB) > SATURATION_THRESHOLD) {
                 result.pixels[i] = img.pixels[i];
             }
         }
@@ -155,15 +97,20 @@ public class HoughTransform extends PApplet {
         return result;
     }
 
-    private PImage intensityThresholding(PImage img, double threshold) {
+    private PImage intensityThresholding(PImage img) {
         // Greyscale to get the intensity and not the brightness
 //        PImage greyScaleImg = img;
 //        greyScaleImg.filter(GRAY);
 
-        PImage result = createImage(img.width, img.height, RGB);
+        /*
+         * img is already in grayscale so no need to convert it
+         * in order to compute the intensity.
+         */
+        PImage result = createImage(img.width, img.height, ALPHA);
 
         for (int i = 0; i < img.width * img.height; i++) {
-            if (brightness(img.pixels[i]) < threshold) {
+            double intensityThreshold = 128;
+            if (brightness(img.pixels[i]) < intensityThreshold) {
                 result.pixels[i] = img.pixels[i];
             }
         }
@@ -328,7 +275,7 @@ public class HoughTransform extends PApplet {
 
         // only search around lines with more that this amount of votes
         // (to be adapted to your image)
-        int minVotes = 200;
+        int minVotes = 98;
         for (int accR = 0; accR < rDim; accR++) {
             for (int accPhi = 0; accPhi < phiDim; accPhi++) {
                 // compute current index in the accumulator
@@ -477,7 +424,7 @@ public class HoughTransform extends PApplet {
                         intensities += brightness(img.pixels[(j + l) * img.width + (i + k)]) * kernel[k + 1][l + 1];
                     }
                 }
-//                System.out.println(intensities);
+
                 result.pixels[j * img.width + i] = color(intensities / weight);
                 intensities = 0;
             }

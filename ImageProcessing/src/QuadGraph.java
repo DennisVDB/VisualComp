@@ -7,26 +7,7 @@ import java.util.function.Predicate;
 public class QuadGraph {
     List<int[]> cycles = new ArrayList<int[]>();
     int[][] graph;
-
-    public void build(List<PVector> lines, int width, int height) {
-        int n = lines.size();
-
-        // The maximum possible number of edges is sum(0..n) = n * (n + 1)/2
-        graph = new int[n * (n + 1) / 2][2];
-
-        int idx = 0;
-
-        for (int i = 0; i < lines.size(); i++) {
-            for (int j = i + 1; j < lines.size(); j++) {
-                if (intersect(lines.get(i), lines.get(j), width, height)) {
-                    graph[idx][0] = i;
-                    graph[idx][1] = j;
-
-                    idx++;
-                }
-            }
-        }
-    }
+    List<PVector> lines;
 
     /**
      * Returns true if polar lines 1 and 2 intersect
@@ -45,75 +26,8 @@ public class QuadGraph {
         int x = (int) ((r2 * sin_t1 - r1 * sin_t2) / denom);
         int y = (int) ((-r2 * cos_t1 + r1 * cos_t2) / denom);
 
-        if (0 <= x && 0 <= y && width >= x && height >= y)
-            return true;
-        else
-            return false;
+        return 0 <= x && 0 <= y && width >= x && height >= y;
 
-    }
-
-    List<int[]> findCycles() {
-        cycles.clear();
-        for (int i = 0; i < graph.length; i++) {
-            for (int j = 0; j < graph[i].length; j++) {
-                findNewCycles(new int[]{graph[i][j]});
-            }
-        }
-
-        cycles.removeIf(new Predicate<int[]>() {
-            @Override
-            public boolean test(int[] cy) {
-                return cy.length != 4;
-            }
-        });
-
-        cycles.removeIf(new Predicate<int[]>() {
-            @Override
-            public boolean test(int[] cy) {
-                return isConvex(cy[0])
-            }
-        });
-
-        for (int[] cy : cycles) {
-            String s = "" + cy[0];
-
-            for (int i = 1; i < cy.length; i++) {
-                s += "," + cy[i];
-            }
-
-            System.out.println(s);
-        }
-
-        return cycles;
-    }
-
-    void findNewCycles(int[] path) {
-        int n = path[0];
-        int x;
-        int[] sub = new int[path.length + 1];
-
-        for (int i = 0; i < graph.length; i++) {
-            for (int y = 0; y <= 1; y++) {
-                if (graph[i][y] == n) {
-                    //  edge refers to our current node
-                    x = graph[i][(y + 1) % 2];
-                    if (!visited(x, path)) {
-                        //  neighbor node not on path yet
-                        sub[0] = x;
-                        System.arraycopy(path, 0, sub, 1, path.length);
-                        //  explore extended path
-                        findNewCycles(sub);
-                    } else if ((path.length > 2) && (x == path[path.length - 1])) {
-                        //  cycle found
-                        int[] p = normalize(path);
-                        int[] inv = invert(p);
-                        if (isNew(p) && isNew(inv)) {
-                            cycles.add(p);
-                        }
-                    }
-                }
-            }
-        }
     }
 
     //  check of both arrays have same lengths and contents
@@ -155,21 +69,6 @@ public class QuadGraph {
         }
 
         return p;
-    }
-
-    //  compare path against known cycles
-    //  return true, iff path is not a known cycle
-    Boolean isNew(int[] path) {
-        Boolean ret = true;
-
-        for (int[] p : cycles) {
-            if (equals(p, path)) {
-                ret = false;
-                break;
-            }
-        }
-
-        return ret;
     }
 
     //  return the int of the array which is the smallest
@@ -247,7 +146,7 @@ public class QuadGraph {
 
         float area = Math.abs(0.5f * (i1 + i2 + i3 + i4));
 
-        //System.out.println(area);
+        System.out.println(area);
 
         boolean valid = (area < max_area && area > min_area);
 
@@ -280,5 +179,124 @@ public class QuadGraph {
             System.out.println("Flat quad");
             return false;
         }
+    }
+
+    public void build(List<PVector> lines, int width, int height) {
+        this.lines = lines;
+
+        int n = lines.size();
+
+        // The maximum possible number of edges is sum(0..n) = n * (n + 1)/2
+        graph = new int[n * (n + 1) / 2][2];
+
+        int idx = 0;
+
+        for (int i = 0; i < lines.size(); i++) {
+            for (int j = i + 1; j < lines.size(); j++) {
+                if (intersect(lines.get(i), lines.get(j), width, height)) {
+                    graph[idx][0] = i;
+                    graph[idx][1] = j;
+
+                    idx++;
+                }
+            }
+        }
+    }
+
+    List<int[]> findCycles() {
+        cycles.clear();
+        for (int i = 0; i < graph.length; i++) {
+            for (int j = 0; j < graph[i].length; j++) {
+                findNewCycles(new int[]{graph[i][j]});
+            }
+        }
+
+        cycles.removeIf(new Predicate<int[]>() {
+            @Override
+            public boolean test(int[] cy) {
+                return cy.length != 4;
+            }
+        });
+
+        cycles.removeIf(new Predicate<int[]>() {
+            @Override
+            public boolean test(int[] cy) {
+                return isConvex(lines.get(cy[0]), lines.get(cy[1]), lines.get(cy[2]), lines.get(cy[3]));
+            }
+        });
+
+//        cycles.removeIf(new Predicate<int[]>() {
+//            @Override
+//            public boolean test(int[] cy) {
+//                // 1:
+//                // 2:
+//                // 3: 1500 - 1300
+//                // 4:
+//                return !validArea(lines.get(cy[0]), lines.get(cy[1]), lines.get(cy[2]), lines.get(cy[3]), 10000 , 0);
+//            }
+//        });
+
+//        cycles.removeIf(new Predicate<int[]>() {
+//            @Override
+//            public boolean test(int[] cy) {
+//                return nonFlatQuad(lines.get(cy[0]), lines.get(cy[1]), lines.get(cy[2]), lines.get(cy[3]));
+//            }
+//        });
+
+        for (int[] cy : cycles) {
+            String s = "" + cy[0];
+
+            for (int i = 1; i < cy.length; i++) {
+                s += "," + cy[i];
+            }
+
+            System.out.println(s);
+        }
+
+        return cycles;
+    }
+
+    void findNewCycles(int[] path) {
+        int n = path[0];
+        int x;
+        int[] sub = new int[path.length + 1];
+
+        for (int i = 0; i < graph.length; i++) {
+            for (int y = 0; y <= 1; y++) {
+                if (graph[i][y] == n) {
+                    //  edge refers to our current node
+                    x = graph[i][(y + 1) % 2];
+                    if (!visited(x, path)) {
+                        //  neighbor node not on path yet
+                        sub[0] = x;
+                        System.arraycopy(path, 0, sub, 1, path.length);
+                        //  explore extended path
+                        findNewCycles(sub);
+                    } else if ((path.length > 2) && (x == path[path.length - 1])) {
+                        //  cycle found
+                        int[] p = normalize(path);
+                        int[] inv = invert(p);
+                        if (isNew(p) && isNew(inv)) {
+                            cycles.add(p);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //  compare path against known cycles
+    //  return true, iff path is not a known cycle
+    Boolean isNew(int[] path) {
+        Boolean ret = true;
+
+        for (int[] p : cycles) {
+            if (equals(p, path)) {
+                ret = false;
+                break;
+            }
+        }
+
+        return ret;
     }
 }
