@@ -18,6 +18,9 @@ public class HoughTransform extends PApplet {
     public static final double HUE_THRESHOLD_HIGH = 150;
 
     public static final double SATURATION_THRESHOLD = 118;
+
+    public static final int IMG_WIDTH = 800;
+    public static final int IMG_HEIGHT = 600;
     public static final int RESIZE = 2;
 
     private final float discretizationStepsPhi = 0.06f;
@@ -29,10 +32,10 @@ public class HoughTransform extends PApplet {
     private PImage img;
 
     public final void setup() {
-        size(1200, 300);
         img = loadImage("board1.jpg");
+        size(img.width * 3 / RESIZE, img.height / RESIZE);
 
-        rDim = (int) (((800 + 600) * 2 + 1) / discretizationStepsR);
+        rDim = (int) (((img.width + img.height) * 2 + 1) / discretizationStepsR);
         createTrigoTables();
     }
 
@@ -44,18 +47,18 @@ public class HoughTransform extends PApplet {
     private void updateView() {
         PImage result;
 
-        image(img, 0, 0, 400, 300);
+        image(img, 0, 0, img.width / RESIZE, img.height / 2);
 
         result = hueBrightnessSaturationThresholding(img);
         result = gaussianBlur(result);
         result = intensityThresholding(result);
         result = sobel(result);
-        image(result, 800, 0, 400, 300);
+        image(result, img.width, 0, img.width / RESIZE, img.height / 2);
 
         ArrayList<PVector> lines = hough(result);
 
         QuadGraph quadGraph = new QuadGraph();
-        quadGraph.build(lines, 800, 600);
+        quadGraph.build(lines, IMG_WIDTH, IMG_HEIGHT);
 
         plotQuad(lines, quadGraph.findBestQuad());
     }
@@ -252,9 +255,9 @@ public class HoughTransform extends PApplet {
         }
 
         houghImg.updatePixels();
-        houghImg.resize(800, 600);
+        houghImg.resize(img.width, img.height);
 
-        image(houghImg, 400, 0, 400, 300);
+        image(houghImg, 400, 0, img.width / RESIZE, img.height / RESIZE);
     }
 
     private void optimizeCandidates(int[] accumulator, ArrayList<Integer> bestCandidates) {
