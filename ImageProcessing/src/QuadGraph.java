@@ -127,7 +127,6 @@ public class QuadGraph {
         else
             System.out.println("Eliminating non-convex quad");
         return false;
-
     }
 
     /**
@@ -153,6 +152,37 @@ public class QuadGraph {
         if (!valid) System.out.println("Area out of range");
 
         return valid;
+    }
+
+    private float area(PVector c1, PVector c2, PVector c3, PVector c4) {
+        PVector v21 = PVector.sub(c1, c2);
+        PVector v32 = PVector.sub(c2, c3);
+        PVector v43 = PVector.sub(c3, c4);
+        PVector v14 = PVector.sub(c4, c1);
+
+        float i1 = v21.cross(v32).z;
+        float i2 = v32.cross(v43).z;
+        float i3 = v43.cross(v14).z;
+        float i4 = v14.cross(v21).z;
+
+        return Math.abs(0.5f * (i1 + i2 + i3 + i4));
+    }
+
+    public int largestQuad() {
+        int largestQuad = 0;
+        float largestArea = 0;
+
+        for (int i = 0; i < cycles.size(); i++) {
+            int[] cycle = cycles.get(i);
+            float area = area(lines.get(cycle[0]), lines.get(cycle[1]), lines.get(cycle[2]), lines.get(cycle[3]));
+
+            if (area > largestArea) {
+                largestQuad = i;
+                largestArea = area;
+            }
+        }
+
+        return largestQuad;
     }
 
     /**
@@ -218,12 +248,12 @@ public class QuadGraph {
             }
         });
 
-        cycles.removeIf(new Predicate<int[]>() {
-            @Override
-            public boolean test(int[] cy) {
-                return isConvex(lines.get(cy[0]), lines.get(cy[1]), lines.get(cy[2]), lines.get(cy[3]));
-            }
-        });
+//        cycles.removeIf(new Predicate<int[]>() {
+//            @Override
+//            public boolean test(int[] cy) {
+//                return !isConvex(lines.get(cy[0]), lines.get(cy[1]), lines.get(cy[2]), lines.get(cy[3]));
+//            }
+//        });
 
 //        cycles.removeIf(new Predicate<int[]>() {
 //            @Override
@@ -236,24 +266,30 @@ public class QuadGraph {
 //            }
 //        });
 
-//        cycles.removeIf(new Predicate<int[]>() {
-//            @Override
-//            public boolean test(int[] cy) {
-//                return nonFlatQuad(lines.get(cy[0]), lines.get(cy[1]), lines.get(cy[2]), lines.get(cy[3]));
-//            }
-//        });
-
-        for (int[] cy : cycles) {
-            String s = "" + cy[0];
-
-            for (int i = 1; i < cy.length; i++) {
-                s += "," + cy[i];
+        cycles.removeIf(new Predicate<int[]>() {
+            @Override
+            public boolean test(int[] cy) {
+                return nonFlatQuad(lines.get(cy[0]), lines.get(cy[1]), lines.get(cy[2]), lines.get(cy[3]));
             }
+        });
 
-            System.out.println(s);
-        }
+//        for (int[] cy : cycles) {
+//            String s = "" + cy[0];
+//
+//            for (int i = 1; i < cy.length; i++) {
+//                s += "," + cy[i];
+//            }
+//
+//            System.out.println(s);
+//        }
 
         return cycles;
+    }
+
+    int[] findBestQuad() {
+        List<int[]> cycles = findCycles();
+
+        return cycles.get(largestQuad());
     }
 
     void findNewCycles(int[] path) {
