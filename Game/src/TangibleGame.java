@@ -1,12 +1,17 @@
 import processing.core.PApplet;
 import processing.core.PGraphics;
+import processing.core.PImage;
 import processing.core.PVector;
 import processing.event.MouseEvent;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class Game extends PApplet {
+import processing.video.*;
 
+public class TangibleGame extends PApplet {
+    Movie cam;
+    PImage img;
     float depth = 1000;
 
     PGraphics infoWindow;
@@ -31,8 +36,11 @@ public class Game extends PApplet {
 
     boolean editMode = false;
 
+    CornerExtractor extractor = new CornerExtractor(this);
+    TwoDThreeD twoDThreeD;
+
     static public void main(String[] passedArgs) {
-        String[] appletArgs = new String[]{"Game"};
+        String[] appletArgs = new String[]{"TangibleGame"};
         if (passedArgs != null) {
             PApplet.main(concat(appletArgs, passedArgs));
         } else {
@@ -43,6 +51,13 @@ public class Game extends PApplet {
     public void setup() {
         size(displayWidth, displayHeight, P3D);
         noStroke();
+
+        cam = new Movie(this, "/Users/dennis/Documents/EPFL/6/visual_comp/VisualComp/Game/src/testvideo.mp4");
+        cam.loop();
+
+        img = loadImage("board3.jpg");
+
+        twoDThreeD = new TwoDThreeD(img.width, img.height);
 
         boxWidth = width / 2;
         boxDepth = width / 2;
@@ -59,6 +74,7 @@ public class Game extends PApplet {
     }
 
     public void draw() {
+        background(MAX_INT); // white
   /*
    * The elevation of the camera creates projection problems when
    * getting coordinates from the mouse. Therefore we remove this
@@ -73,11 +89,15 @@ public class Game extends PApplet {
         directionalLight(51, 102, 126, 0, 1, 1);
         ambientLight(102, 102, 102);
 
-        background(MAX_INT); // white
-
         camera();
+        fill(255, 0);
         drawInfoWindow();
         image(infoWindow, 0, height - infoWindowHeight - 100);
+
+        List<PVector> points2D = extractor.getQuad(img);
+
+
+        image(img, 0, 0);
 
         if (!editMode) {
             camera(width / 2, height / 2 - elevation, depth, width / 2, height / 2, 0, 0, 1, 0);
@@ -87,13 +107,24 @@ public class Game extends PApplet {
 
 
     /* Angle of the board. */
-            rotateX(-angleX);
-            rotateZ(angleZ);
+            if (points2D != null) {
+                System.out.println(twoDThreeD.get3DRotations(points2D).toString());
+                PVector rotation = twoDThreeD.get3DRotations(points2D);
+
+//                rotateX((float) -limitRotation(rotation.x * RAD_TO_DEG, maxRotation));
+//                rotateZ((float) limitRotation(rotation.z * RAD_TO_DEG, maxRotation));
+
+                rotateX(rotation.x * RAD_TO_DEG);
+                rotateZ(rotation.z * RAD_TO_DEG);
+
+                mover.update(-rotation.x * RAD_TO_DEG, rotation.z * RAD_TO_DEG);
+
+            } else {
+                System.out.println("Nothing");
+            }
 
             fill(200, 200, 200);
             box(boxWidth, boxThickness, boxDepth);
-
-            mover.update(angleX, angleZ);
 
     /*
      * Display the cylinders and handle
@@ -129,6 +160,10 @@ public class Game extends PApplet {
                 t.display();
             }
         }
+    }
+
+    public void movieEvent(Movie m) {
+        m.read();
     }
 
     public void drawInfoWindow() {
@@ -193,8 +228,8 @@ public class Game extends PApplet {
         angleX += map(mouseY - pmouseY, -height, height, -speed / 100, speed / 100);
         angleZ += map(mouseX - pmouseX, -width, width, -speed / 100, speed / 100);
 
-        angleX = limitRotation(angleX, maxRotation);
-        angleZ = limitRotation(angleZ, maxRotation);
+        angleX = (float) limitRotation(angleX, maxRotation);
+        angleZ = (float) limitRotation(angleZ, maxRotation);
     }
 
     public void mouseClicked() {
@@ -225,7 +260,7 @@ public class Game extends PApplet {
         }
     }
 
-    public float limitRotation(float angle, float maxRotation) {
+    public double limitRotation(double angle, float maxRotation) {
         angle = angle < -maxRotation ? -maxRotation : angle;
         angle = angle > maxRotation ? maxRotation : angle;
 

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="papaya">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../../../Programming/java/libraries/papaya/library/papaya.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
